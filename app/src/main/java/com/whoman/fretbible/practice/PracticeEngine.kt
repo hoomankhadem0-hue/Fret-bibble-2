@@ -12,10 +12,21 @@ class PracticeEngine {
     private val stats = mutableMapOf<Pair<Int, Int>, FretStats>()
 
     fun evaluate(target: TargetNote, detected: DetectedNote): AttemptState {
-        // Fretboard training is about the note, not tuning precision.
-        // A correct note must not fail just because the guitar is a few cents sharp/flat.
-        if (detected.confidence < 0.35) return AttemptState.LISTENING
-        return if (detected.midi == target.midi) AttemptState.CORRECT else AttemptState.WRONG_NOTE
+        // The exercise verifies the musical note, not tuning precision.
+        // B3 at 244 Hz, 247 Hz, etc. is still B3 for fretboard training.
+        if (detected.confidence < 0.18) return AttemptState.LISTENING
+
+        if (detected.midi == target.midi) {
+            return AttemptState.CORRECT
+        }
+
+        // Keep useful tuning feedback when the detector is exactly one
+        // semitone away from the requested note.
+        return when {
+            detected.midi == target.midi + 1 -> AttemptState.TOO_HIGH
+            detected.midi == target.midi - 1 -> AttemptState.TOO_LOW
+            else -> AttemptState.WRONG_NOTE
+        }
     }
 
     fun record(target: TargetNote, correct: Boolean) {
