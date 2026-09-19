@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 class AudioEngine{
 companion object{const val SAMPLE_RATE=44100}
 private val detector=PitchDetector(SAMPLE_RATE);private val running=AtomicBoolean(false);private var recorder:AudioRecord?=null
-private val _detected=MutableStateFlow<DetectedNote?>(null);val detected:StateFlow<DetectedNote?>=_detected
+private val _detected=MutableStateFlow<DetectedNote?>(null);val detected: StateFlow<DetectedNote?> = _detected
 suspend fun start(){
 if(running.getAndSet(true))return
 val minBuffer=AudioRecord.getMinBufferSize(SAMPLE_RATE,AudioFormat.CHANNEL_IN_MONO,AudioFormat.ENCODING_PCM_16BIT)
