@@ -6,12 +6,12 @@ plugins {
 
 android {
     namespace = "com.whoman.fretbible"
-    compileSdk = 37
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.whoman.fretbible"
         minSdk = 26
-        targetSdk = 37
+        targetSdk = 35
         versionCode = 2
         versionName = "0.2.0"
     }
