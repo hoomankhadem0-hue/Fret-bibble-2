@@ -5,6 +5,10 @@ on:
   push:
     branches: [ main, master ]
 
+concurrency:
+  group: fret-bible-apk-build
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -22,12 +26,10 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '9.4.1'
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-      - name: Install Android SDK platform/build tools
+      - name: Install Android SDK packages
         run: |
-          sdkmanager "platform-tools" "platforms;android-37" "build-tools;35.0.0"
           yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
       - name: Build debug APK
         run: gradle --no-daemon assembleDebug
       - name: Upload APK
