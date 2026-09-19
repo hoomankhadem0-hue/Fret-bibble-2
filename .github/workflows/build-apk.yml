@@ -48,4 +48,4 @@ jobs:
           name: FretBible-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
 
-# build pipeline verified for current app changes
+# adaptive learning, diagnostics and trainer UI build
