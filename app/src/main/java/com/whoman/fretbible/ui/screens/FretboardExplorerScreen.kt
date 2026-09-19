@@ -24,6 +24,7 @@ fun FretboardExplorerScreen(onBack: () -> Unit) {
             TextButton(onClick = onBack) { Text("DONE") }
         }
         Text("Swipe left / right to explore every string and fret.", color = TextSecondary)
+        Text("Standard tuning · 6 strings · 25 positions per string", color = TextMuted, style = MaterialTheme.typography.bodySmall)
         Card(colors = CardDefaults.cardColors(containerColor = Surface), modifier = Modifier.fillMaxWidth().weight(1f)) {
             Row(Modifier.fillMaxSize().horizontalScroll(rememberScrollState()).padding(12.dp)) {
                 Column(Modifier.width(56.dp)) {
