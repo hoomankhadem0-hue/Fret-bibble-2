@@ -4,8 +4,11 @@ import com.whoman.fretbible.core.model.*
 import kotlin.math.*
 
 /**
- * Monophonic guitar pitch detector using a YIN-style difference function.
- * This is less likely than raw autocorrelation to lock onto a strong harmonic.
+ * Guitar-focused monophonic YIN pitch detector.
+ *
+ * Important: CMNDF is accumulated from lag 1, not from minLag. Starting the
+ * cumulative sum at minLag biases the curve and can make otherwise correct
+ * notes jump to a neighboring harmonic.
  */
 class PitchDetector(
     private val sampleRate: Int = 44100,
@@ -14,7 +17,9 @@ class PitchDetector(
 ) {
     fun detect(samples: FloatArray): DetectedNote? {
         if (samples.size < 4096) return null
-        if (rms(samples) < AudioSettings.sensitivity) return null
+
+        val rawRms = rms(samples)
+        if (rawRms < AudioSettings.sensitivity) return null
 
         val x = samples.copyOf()
         removeDc(x)
@@ -23,7 +28,11 @@ class PitchDetector(
         val result = yin(x) ?: return null
         val frequency = result.first
         val confidence = result.second
-        if (frequency !in minHz..maxHz || confidence < 0.35) return null
+
+        // YIN already rejected the frame if it cannot find a periodic candidate.
+        // Keep this threshold deliberately permissive; the practice screen adds
+        // temporal stability before accepting a note.
+        if (frequency !in minHz..maxHz || confidence < 0.18) return null
 
         val midiFloat = 69.0 + 12.0 * log2(frequency / 440.0)
         val midi = round(midiFloat).toInt()
@@ -31,12 +40,12 @@ class PitchDetector(
         val cents = 1200.0 * log2(frequency / idealHz)
 
         return DetectedNote(
-            frequency,
-            midi,
-            NoteName.fromMidi(midi),
-            (midi / 12) - 1,
-            cents,
-            confidence
+            frequencyHz = frequency,
+            midi = midi,
+            note = NoteName.fromMidi(midi),
+            octave = (midi / 12) - 1,
+            cents = cents,
+            confidence = confidence
         )
     }
 
@@ -47,7 +56,8 @@ class PitchDetector(
 
         val difference = DoubleArray(maxLag + 1)
 
-        for (lag in minLag..maxLag) {
+        // Difference function.
+        for (lag in 1..maxLag) {
             var sum = 0.0
             var i = 0
             val limit = x.size - lag
@@ -59,41 +69,53 @@ class PitchDetector(
             difference[lag] = sum
         }
 
+        // Correct CMNDF: denominator is sum(d(1)..d(tau)).
         var running = 0.0
-        var bestLag = -1
-        var bestValue = Double.POSITIVE_INFINITY
+        val cmndf = DoubleArray(maxLag + 1)
+        cmndf[0] = 1.0
 
-        for (lag in minLag..maxLag) {
+        for (lag in 1..maxLag) {
             running += difference[lag]
-            val cmnd = if (running <= 1e-12) 1.0 else difference[lag] * lag / running
-
-            if (cmnd < 0.20) {
-                var localLag = lag
-                var localValue = cmnd
-                while (localLag + 1 <= maxLag) {
-                    val next = difference[localLag + 1] * (localLag + 1) /
-                        (running + difference[localLag + 1])
-                    if (next > localValue) break
-                    localLag++
-                    localValue = next
-                }
-                bestLag = localLag
-                bestValue = localValue
-                break
-            }
-
-            if (cmnd < bestValue) {
-                bestValue = cmnd
-                bestLag = lag
+            cmndf[lag] = if (running <= 1e-12) {
+                1.0
+            } else {
+                difference[lag] * lag / running
             }
         }
 
-        if (bestLag < 0 || !bestValue.isFinite()) return null
+        // YIN absolute threshold: take the first dip below threshold,
+        // then descend to its local minimum.
+        val threshold = 0.16
+        var bestLag = -1
+        for (lag in minLag..maxLag) {
+            if (cmndf[lag] < threshold) {
+                var candidate = lag
+                while (candidate + 1 <= maxLag && cmndf[candidate + 1] < cmndf[candidate]) {
+                    candidate++
+                }
+                bestLag = candidate
+                break
+            }
+        }
 
-        val refinedLag = if (bestLag > minLag && bestLag < maxLag) {
-            val y1 = difference[bestLag - 1]
-            val y2 = difference[bestLag]
-            val y3 = difference[bestLag + 1]
+        // If no threshold crossing exists, use the best candidate in the guitar range.
+        if (bestLag < 0) {
+            var best = Double.POSITIVE_INFINITY
+            for (lag in minLag..maxLag) {
+                if (cmndf[lag] < best) {
+                    best = cmndf[lag]
+                    bestLag = lag
+                }
+            }
+        }
+
+        if (bestLag < 0) return null
+
+        val bestValue = cmndf[bestLag]
+        val refinedLag = if (bestLag > 1 && bestLag < maxLag) {
+            val y1 = cmndf[bestLag - 1]
+            val y2 = cmndf[bestLag]
+            val y3 = cmndf[bestLag + 1]
             val denominator = y1 - 2.0 * y2 + y3
             if (abs(denominator) > 1e-12) {
                 bestLag + 0.5 * (y1 - y3) / denominator
