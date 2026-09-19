@@ -24,16 +24,16 @@ import kotlinx.coroutines.launch
 fun PracticeScreen(){
 val context=LocalContext.current;val scope=rememberCoroutineScope();val audio=remember{AudioEngine()};val engine=remember{PracticeEngine()};val detected by audio.detected.collectAsState();val targets=remember{engine.targets()}
 var index by remember{mutableIntStateOf(0)};var wrong by remember{mutableIntStateOf(0)};var correct by remember{mutableIntStateOf(0)};var feedback by remember{mutableStateOf(AttemptState.LISTENING)};var running by remember{mutableStateOf(false)};var denied by remember{mutableStateOf(false)};var elapsed by remember{mutableIntStateOf(0)}
-var stableFrames by remember{mutableIntStateOf(0)};var streak by remember{mutableIntStateOf(0)};var lastMidi by remember{mutableIntStateOf(-999)};var lastCents by remember{mutableFloatStateOf(999f)};var locked by remember{mutableStateOf(false)}
-fun resetStability(){stableFrames=0;lastMidi=-999;lastCents=999f}
+var stableFrames by remember{mutableIntStateOf(0)};var streak by remember{mutableIntStateOf(0)};var lastMidi by remember{mutableIntStateOf(-999)};var locked by remember{mutableStateOf(false)}
+fun resetStability(){stableFrames=0;lastMidi=-999}
 val launcher=rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()){granted->denied=!granted;if(granted){running=true;scope.launch{audio.start()}}}
 DisposableEffect(Unit){onDispose{audio.stop()}}
 LaunchedEffect(running){if(running)while(running){delay(1000);elapsed++}}
 LaunchedEffect(detected,index,running){
 if(!running||detected==null||index>=targets.size||locked)return@LaunchedEffect
-val d=detected!!;if(d.confidence<.78)return@LaunchedEffect
-val same=d.midi==lastMidi&&abs(d.cents-lastCents)<35f
-stableFrames=if(same)stableFrames+1 else 1;lastMidi=d.midi;lastCents=d.cents.toFloat()
+val d=detected!!;if(d.confidence<.35)return@LaunchedEffect
+val same=d.midi==lastMidi
+stableFrames=if(same)stableFrames+1 else 1;lastMidi=d.midi
 if(stableFrames<2)return@LaunchedEffect
 val state=engine.evaluate(targets[index],d);if(state==AttemptState.LISTENING)return@LaunchedEffect
 feedback=state
