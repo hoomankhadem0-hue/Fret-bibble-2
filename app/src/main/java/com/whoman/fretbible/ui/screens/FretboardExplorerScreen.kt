@@ -33,7 +33,7 @@ fun FretboardExplorerScreen(onBack: () -> Unit) {
                         Text("$stringNumber", color = TextPrimary, modifier = Modifier.height(62.dp), style = MaterialTheme.typography.titleMedium)
                     }
                 }
-                Column(Modifier.width(25 * 64.dp)) {
+                Column(Modifier.width(64.dp * 25)) {
                     Row(Modifier.height(48.dp)) {
                         (0..24).forEach { fret ->
                             Box(Modifier.width(64.dp).fillMaxHeight()) { Text("#$fret", color = TextMuted, modifier = Modifier.padding(8.dp)) }
