@@ -35,6 +35,7 @@ fun ProfileScreen(onFretboard: () -> Unit) {
             Text("LESS SENSITIVE", color = TextMuted, style = MaterialTheme.typography.labelSmall)
         }
         Text("Input mode: automatic (UNPROCESSED → MIC fallback)", color = TextMuted, style = MaterialTheme.typography.bodySmall)
+        Text("Tip: start with the slider near the middle. If quiet notes are missed, move toward MORE SENSITIVE.", color = TextSecondary, style = MaterialTheme.typography.bodySmall)
 
         HorizontalDivider(color = Border)
         Text("FRETBOARD", color = TextMuted, style = MaterialTheme.typography.labelLarge)
