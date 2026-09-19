@@ -19,7 +19,6 @@ import com.whoman.fretbible.ui.components.*
 import com.whoman.fretbible.ui.theme.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlin.math.abs
 
 @Composable
 fun PracticeScreen(){
