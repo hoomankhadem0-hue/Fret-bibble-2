@@ -1,11 +1,7 @@
 package com.whoman.fretbible.navigation
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.BarChart
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Map
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -13,7 +9,7 @@ import androidx.compose.foundation.layout.padding
 import com.whoman.fretbible.ui.screens.*
 import com.whoman.fretbible.ui.theme.*
 
-private enum class Route { Home, Practice, Roadmap, Progress, Profile }
+private enum class Route { Home, Practice, Roadmap, Progress, Profile, Fretboard }
 
 @Composable
 fun AppNavHost() {
@@ -40,17 +36,14 @@ fun AppNavHost() {
             }
         }
     ) { padding ->
-        androidx.compose.animation.AnimatedContent(
-            targetState = route,
-            modifier = Modifier.padding(padding),
-            label = "screen"
-        ) { current ->
+        androidx.compose.animation.AnimatedContent(targetState = route, modifier = Modifier.padding(padding), label = "screen") { current ->
             when (current) {
                 Route.Home -> HomeScreen { route = Route.Practice }
                 Route.Practice -> PracticeScreen()
                 Route.Roadmap -> RoadmapScreen()
                 Route.Progress -> ProgressScreen()
-                Route.Profile -> ProfileScreen()
+                Route.Profile -> ProfileScreen { route = Route.Fretboard }
+                Route.Fretboard -> FretboardExplorerScreen { route = Route.Profile }
             }
         }
     }
