@@ -7,7 +7,15 @@ data class AnalyzerResult(
     val bpmConfidence: Double,
     val key: String,
     val keyConfidence: Double,
-    val chords: List<ChordEstimate>
+    val chords: List<ChordEstimate>,
+    val progressionMatches: List<ProgressionMatch> = emptyList()
+)
+
+data class ProgressionMatch(
+    val pattern: ProgressionPattern,
+    val startIndex: Int,
+    val length: Int,
+    val score: Double
 )
 
 data class ChordEstimate(
@@ -158,6 +166,30 @@ object MusicAnalyzer {
             }
         }
         return bestSymbol to ((best - second) * 3.0).coerceIn(0.0, 1.0)
+    }
+
+    fun matchProgressions(chords: List<ChordEstimate>, key: String, maxResults: Int = 5): List<ProgressionMatch> {
+        if (chords.size < 2 || key == "Unknown") return emptyList()
+        val romans = chords.mapNotNull { ProgressionLibrary.romanFor(it.symbol, key) }
+        if (romans.size < 2) return emptyList()
+        val matches = mutableListOf<ProgressionMatch>()
+        for (pattern in ProgressionLibrary.patterns) {
+            if (pattern.numerals.isEmpty()) continue
+            val p = pattern.numerals
+            for (start in romans.indices) {
+                if (start + 2 > romans.size) break
+                val maxLen = minOf(p.size, romans.size - start)
+                for (len in maxLen downTo 2) {
+                    var hits = 0.0
+                    for (i in 0 until len) if (romans[start + i] == p[i]) hits += 1.0
+                    val fit = hits / len
+                    val coverage = len.toDouble() / p.size.coerceAtLeast(1)
+                    val score = fit * 0.72 + coverage * 0.28
+                    if (score >= 0.72) matches += ProgressionMatch(pattern, start, len, score)
+                }
+            }
+        }
+        return matches.sortedByDescending { it.score }.distinctBy { it.pattern.name + ":" + it.startIndex }.take(maxResults)
     }
 
     private fun mergeShortChanges(input: List<ChordEstimate>, minDuration: Double): List<ChordEstimate> {
