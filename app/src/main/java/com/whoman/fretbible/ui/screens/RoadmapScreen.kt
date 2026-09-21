@@ -18,7 +18,7 @@ import com.whoman.fretbible.ui.components.*
 import com.whoman.fretbible.ui.theme.*
 
 @Composable
-fun RoadmapScreen() {
+fun RoadmapScreen(userName: String) {
     val nodes = listOf(
         "Foundation" to "Six open strings, tuning and note names.",
         "Natural notes" to "Find A–G across the first positions.",
@@ -36,8 +36,8 @@ fun RoadmapScreen() {
     ) {
         ScreenHeader(
             kicker = "ROADMAP",
-            title = "Learn the neck in layers.",
-            subtitle = "A visual path from open strings to musical fluency."
+            title = "${userName.trim()} · Roadmap",
+            subtitle = "Your path through the fretboard."
         )
 
         SurfaceCard(modifier = Modifier.fillMaxWidth(), elevated = true) {
