@@ -171,20 +171,30 @@ fun PracticeScreen(userName: String) {
 
 
     LaunchedEffect(running, index, config.timerSeconds) {
-        if (!running || !config.timerEnabled || current == null || locked) return@LaunchedEffect
+        if (!running || !config.timerEnabled || current == null) return@LaunchedEffect
         val limit = config.timerSeconds ?: return@LaunchedEffect
+        val targetIndex = index
         secondsLeft = limit
-        while (running && config.timerSeconds != null && !locked && secondsLeft > 0) {
+        while (running && config.timerSeconds != null && index == targetIndex && secondsLeft > 0) {
             delay(1000)
-            if (!locked) secondsLeft--
+            if (running && index == targetIndex) secondsLeft--
         }
-        if (running && config.timerSeconds != null && !locked && secondsLeft == 0) {
+        if (running && config.timerSeconds != null && index == targetIndex && secondsLeft == 0) {
             feedback = AttemptState.WRONG_NOTE
-            misses++; streak = 0; engine.record(current, false); locked = true
-            delay(350)
-            if (index < targets.lastIndex) {
-                index++; feedback = AttemptState.LISTENING; resetStability(); locked = false
-            } else finishSession()
+            misses++
+            streak = 0
+            engine.record(current, false)
+            delay(300)
+            if (running && index == targetIndex) {
+                if (index < targets.lastIndex) {
+                    index++
+                    feedback = AttemptState.LISTENING
+                    resetStability()
+                    locked = false
+                } else {
+                    finishSession()
+                }
+            }
         }
     }
 
