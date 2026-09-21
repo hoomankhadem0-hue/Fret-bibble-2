@@ -41,7 +41,7 @@ fun AppNavHost() {
                 windowInsets = NavigationBarDefaults.windowInsets
             ) {
                 items.forEach { (item, icon) ->
-                    val selected = route == item || (item == Route.Profile && route == Route.Analyzer)
+                    val selected = route == item || (item == Route.Profile)
                     NavigationBarItem(
                         selected = selected,
                         onClick = { route = item },
@@ -68,12 +68,13 @@ fun AppNavHost() {
             when (current) {
                 Route.Home -> HomeScreen(
                     onStartPractice = { route = Route.Practice },
-                    onOpenDictionary = { route = Route.Dictionary }
+                    onOpenDictionary = { route = Route.Dictionary },
+                    onOpenAnalyzer = { route = Route.Analyzer }
                 )
                 Route.Practice -> PracticeScreen()
                 Route.Roadmap -> RoadmapScreen()
                 Route.Progress -> ProgressScreen()
-                Route.Profile -> ProfileScreen { route = Route.Analyzer }
+                Route.Profile -> ProfileScreen()
                 Route.Analyzer -> AnalyzerScreen()
                 Route.Dictionary -> FretboardExplorerScreen { route = Route.Home }
             }
