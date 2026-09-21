@@ -1,11 +1,14 @@
 package com.whoman.fretbible.ui.screens
 
+import android.graphics.BitmapFactory
+import android.util.Base64
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -16,20 +19,21 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.unit.dp
 import com.whoman.fretbible.audio.AudioSettings
 import com.whoman.fretbible.practice.PracticeStatsStore
 import com.whoman.fretbible.ui.components.*
 import com.whoman.fretbible.ui.theme.*
 
+private const val CREATOR_IMAGE_B64 = "${B64_PLACEHOLDER}"
+
 @Composable
 fun ProfileScreen(userName: String, onUserNameChanged: (String) -> Unit) {
     val context = LocalContext.current
     val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
-    var threshold by remember { mutableFloatStateOf(0.0015f) }
+    var threshold by remember { mutableFloatStateOf(AudioSettings.sensitivity) }
     var draftName by remember(userName) { mutableStateOf(userName) }
     var showRename by remember { mutableStateOf(false) }
     val stats = remember { PracticeStatsStore.load(context) }
@@ -41,7 +45,7 @@ fun ProfileScreen(userName: String, onUserNameChanged: (String) -> Unit) {
 
     val min = 0.00005f
     val max = 0.006f
-    val sliderValue = (1f - kotlin.math.sqrt(((threshold - min) / (max - min)).coerceIn(0f, 1f))).coerceIn(0f, 1f)
+    val sliderValue = ((max - threshold) / (max - min)).coerceIn(0f, 1f)
     val sensitivityLabel = when {
         sliderValue > .72f -> "High"
         sliderValue > .42f -> "Balanced"
@@ -55,20 +59,28 @@ fun ProfileScreen(userName: String, onUserNameChanged: (String) -> Unit) {
         Triple("SHARP MEMORY", "Reach 80% accuracy.", stats.attempts > 0 && stats.accuracy >= 80)
     )
 
-    val pulse = rememberInfiniteTransition(label = "profileRing")
+    val pulse = rememberInfiniteTransition(label = "profilePulse")
     val ringScale by pulse.animateFloat(
-        0.96f, 1.04f,
+        .96f, 1.04f,
         infiniteRepeatable(tween(1700, easing = FastOutSlowInEasing), RepeatMode.Reverse),
         label = "ringScale"
     )
-    val creatorGlow by pulse.animateFloat(.12f, .30f, infiniteRepeatable(tween(1900, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "creatorGlow")
+    val cardAlpha by pulse.animateFloat(
+        .96f, 1f,
+        infiniteRepeatable(tween(2100, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+        label = "cardAlpha"
+    )
+
+    val creatorBitmap = remember {
+        runCatching {
+            val bytes = Base64.decode(CREATOR_IMAGE_B64, Base64.DEFAULT)
+            BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+        }.getOrNull()
+    }
 
     Box(Modifier.fillMaxSize()) {
         Column(
-            Modifier
-                .fillMaxSize()
-                .background(Background)
-                .verticalScroll(rememberScrollState())
+            Modifier.fillMaxSize().background(Background).verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp, vertical = 14.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
@@ -94,23 +106,18 @@ fun ProfileScreen(userName: String, onUserNameChanged: (String) -> Unit) {
                             color = LimeSoft
                         ) {
                             Box(contentAlignment = Alignment.Center) {
-                                Text(
-                                    userName.firstOrNull()?.uppercase() ?: "?",
-                                    color = Lime,
-                                    style = MaterialTheme.typography.titleLarge
-                                )
+                                Text(userName.firstOrNull()?.uppercase() ?: "?", color = Lime, style = MaterialTheme.typography.titleLarge)
                             }
                         }
                     }
                     Spacer(Modifier.width(14.dp))
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                         Text(userName, color = TextPrimary, style = MaterialTheme.typography.titleLarge)
-                        Text("${stats.sessions} sessions · ${stats.correct} correct notes", color = TextSecondary, style = MaterialTheme.typography.bodySmall)
+                        Text(stats.sessions.toString() + " sessions · " + stats.correct.toString() + " correct notes", color = TextSecondary, style = MaterialTheme.typography.bodySmall)
                     }
-                    TextButton(onClick = {
-                        draftName = userName
-                        showRename = true
-                    }) { Text("EDIT") }
+                    TextButton(onClick = { draftName = userName; showRename = true }) {
+                        Text("EDIT", color = Lime)
+                    }
                 }
             }
 
@@ -118,17 +125,9 @@ fun ProfileScreen(userName: String, onUserNameChanged: (String) -> Unit) {
             SurfaceCard(modifier = Modifier.fillMaxWidth()) {
                 achievements.forEachIndexed { index, item ->
                     val unlocked = item.third
-                    Row(
-                        Modifier.fillMaxWidth().padding(vertical = if (index == 0) 0.dp else 7.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
+                    Row(Modifier.fillMaxWidth().padding(vertical = if (index == 0) 0.dp else 7.dp), verticalAlignment = Alignment.CenterVertically) {
                         Surface(shape = RoundedCornerShape(10.dp), color = if (unlocked) LimeSoft else Background) {
-                            Text(
-                                if (unlocked) "✓" else "·",
-                                color = if (unlocked) Lime else TextMuted,
-                                style = MaterialTheme.typography.titleMedium,
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp)
-                            )
+                            Text(if (unlocked) "✓" else "·", color = if (unlocked) Lime else TextMuted, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp))
                         }
                         Spacer(Modifier.width(12.dp))
                         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -144,13 +143,13 @@ fun ProfileScreen(userName: String, onUserNameChanged: (String) -> Unit) {
             SurfaceCard(modifier = Modifier.fillMaxWidth(), elevated = true) {
                 Text("MICROPHONE", color = Lime, style = MaterialTheme.typography.labelMedium)
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
-                    Text("Sensitivity", style = MaterialTheme.typography.titleMedium)
+                    Text("Sensitivity", color = TextPrimary, style = MaterialTheme.typography.titleMedium)
                     Text(sensitivityLabel, color = Lime, style = MaterialTheme.typography.labelMedium)
                 }
                 Slider(
                     value = sliderValue,
                     onValueChange = {
-                        val next = min + ((1f - it).coerceIn(0f, 1f).let { value -> value * value }) * (max - min)
+                        val next = max - it * (max - min)
                         threshold = next
                         AudioSettings.setSensitivity(context, next)
                     }
@@ -159,14 +158,10 @@ fun ProfileScreen(userName: String, onUserNameChanged: (String) -> Unit) {
                     Text("LESS", color = TextMuted, style = MaterialTheme.typography.labelSmall)
                     Text("MORE", color = Lime, style = MaterialTheme.typography.labelSmall)
                 }
-                SecondaryAction(
-                    "RESET",
-                    onClick = {
-                        threshold = 0.0015f
-                        AudioSettings.setSensitivity(context, threshold)
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                )
+                SecondaryAction("RESET", onClick = {
+                    threshold = 0.003f
+                    AudioSettings.setSensitivity(context, threshold)
+                }, modifier = Modifier.fillMaxWidth())
             }
 
             SurfaceCard(modifier = Modifier.fillMaxWidth()) {
@@ -178,33 +173,40 @@ fun ProfileScreen(userName: String, onUserNameChanged: (String) -> Unit) {
 
             SectionLabel("ABOUT THE CREATOR")
             SurfaceCard(modifier = Modifier.fillMaxWidth(), elevated = true) {
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(18.dp),
-                    color = Color(0xFFF4F1E9),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Lime.copy(alpha = creatorGlow))
-                ) {
-                    CreatorSketchImage(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(230.dp)
-                    )
+                if (creatorBitmap != null) {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(18.dp),
+                        color = androidx.compose.ui.graphics.Color(0xFFF4F1E9)
+                    ) {
+                        Image(
+                            bitmap = creatorBitmap.asImageBitmap(),
+                            contentDescription = "Creator sketch",
+                            modifier = Modifier.fillMaxWidth().height(210.dp),
+                            contentScale = androidx.compose.ui.layout.ContentScale.Fit,
+                            alpha = cardAlpha
+                        )
+                    }
+                } else {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth().height(210.dp),
+                        shape = RoundedCornerShape(18.dp),
+                        color = LimeSoft
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text("Creator artwork", color = TextSecondary, style = MaterialTheme.typography.bodyMedium)
+                        }
+                    }
                 }
-                Spacer(Modifier.height(4.dp))
+                Spacer(Modifier.height(8.dp))
                 Text("Hooman", color = TextPrimary, style = MaterialTheme.typography.titleLarge)
-                Text("Creator · feedback & contact", color = TextSecondary, style = MaterialTheme.typography.bodySmall)
-                ContactRow(
-                    title = "Instagram",
-                    value = "@Its__whoman",
-                    onClick = { uriHandler.openUri("https://instagram.com/Its__whoman") }
-                )
-                ContactRow(
-                    title = "Email",
-                    value = "hooman.khadem0@gmail.com",
-                    onClick = { uriHandler.openUri("mailto:hooman.khadem0@gmail.com") }
-                )
+                ContactRow("Instagram", "@Its__whoman") {
+                    uriHandler.openUri("https://instagram.com/Its__whoman")
+                }
+                ContactRow("Email", "hooman.khadem0@gmail.com") {
+                    uriHandler.openUri("mailto:hooman.khadem0@gmail.com")
+                }
             }
-
             Spacer(Modifier.height(8.dp))
         }
 
@@ -212,7 +214,7 @@ fun ProfileScreen(userName: String, onUserNameChanged: (String) -> Unit) {
             AlertDialog(
                 onDismissRequest = { showRename = false },
                 containerColor = ElevatedSurface,
-                title = { Text("Your name") },
+                title = { Text("Your name", color = TextPrimary) },
                 text = {
                     OutlinedTextField(
                         value = draftName,
@@ -222,15 +224,13 @@ fun ProfileScreen(userName: String, onUserNameChanged: (String) -> Unit) {
                     )
                 },
                 confirmButton = {
-                    TextButton(
-                        onClick = {
-                            val next = draftName.trim()
-                            if (next.isNotEmpty()) {
-                                onUserNameChanged(next)
-                                showRename = false
-                            }
+                    TextButton(onClick = {
+                        val next = draftName.trim()
+                        if (next.isNotEmpty()) {
+                            onUserNameChanged(next)
+                            showRename = false
                         }
-                    ) { Text("SAVE", color = Lime) }
+                    }) { Text("SAVE", color = Lime) }
                 },
                 dismissButton = {
                     TextButton(onClick = { showRename = false }) { Text("CANCEL", color = TextMuted) }
@@ -249,10 +249,7 @@ private fun ContactRow(title: String, value: String, onClick: () -> Unit) {
         border = androidx.compose.foundation.BorderStroke(1.dp, Border.copy(alpha = .55f)),
         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
     ) {
-        Row(
-            Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(title, color = TextMuted, style = MaterialTheme.typography.labelSmall)
                 Text(value, color = TextPrimary, style = MaterialTheme.typography.bodyMedium)
