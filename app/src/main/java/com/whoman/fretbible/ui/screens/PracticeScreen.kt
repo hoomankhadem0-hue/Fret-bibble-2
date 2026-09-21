@@ -516,6 +516,7 @@ fun PracticeScreen(userName: String) {
                     }
                 }
             }
+        }
 
         countdown?.let { value ->
             Surface(
