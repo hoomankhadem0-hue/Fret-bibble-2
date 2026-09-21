@@ -322,23 +322,7 @@ fun PracticeScreen(userName: String) {
                             config.timerSeconds?.let { "${it} sec · shorter = more points" } ?: "Off · training mode · no score"
                         ) { dialog = "timer" }
 
-                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                                Text("Speed timer", color = TextPrimary, style = MaterialTheme.typography.bodyLarge)
-                                Text(
-                                    config.timerSeconds?.let { "${it} seconds per note" } ?: "Training mode · no score",
-                                    color = TextSecondary,
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                            }
-                            Switch(
-                                checked = config.timerSeconds != null,
-                                onCheckedChange = {
-                                    config = config.copy(timerSeconds = if (it) 10 else null)
-                                    PracticePreferences.save(context, config)
-                                }
-                            )
-                        }
+                }
                     }
                 }
 
