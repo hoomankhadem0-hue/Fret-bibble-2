@@ -23,10 +23,7 @@ fun ProfileScreen() {
 
         Text("AUDIO", color = TextMuted, style = MaterialTheme.typography.labelLarge)
         Text("Microphone sensitivity", style = MaterialTheme.typography.titleLarge)
-        Text(
-            "Controls how quiet a note can be before the detector ignores it.",
-            color = TextSecondary
-        )
+        Text("Controls how quiet a note can be before the detector ignores it.", color = TextSecondary)
         Slider(
             value = sensitivity,
             onValueChange = {
@@ -36,19 +33,12 @@ fun ProfileScreen() {
             valueRange = 0.00005f..0.006f,
             steps = 23
         )
-        Row(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text("MORE SENSITIVE", color = Lime, style = MaterialTheme.typography.labelSmall)
             Text("%.5f".format(sensitivity), color = TextMuted, style = MaterialTheme.typography.labelSmall)
             Text("LESS SENSITIVE", color = TextMuted, style = MaterialTheme.typography.labelSmall)
         }
-        Text(
-            "Input: MIC → UNPROCESSED fallback",
-            color = TextMuted,
-            style = MaterialTheme.typography.bodySmall
-        )
+        Text("Input: MIC → UNPROCESSED fallback", color = TextMuted, style = MaterialTheme.typography.bodySmall)
         Text(
             "Start around the middle. If the app still needs a hard strum, move toward MORE SENSITIVE.",
             color = TextSecondary,
@@ -60,6 +50,7 @@ fun ProfileScreen() {
         SettingsRow("Pitch matching", "Note + octave")
         SettingsRow("Tolerance", "Cents do not block a correct note")
         SettingsRow("Tuning", "Standard E A D G B E")
+        SettingsRow("Timer", "Optional 10-second speed mode")
 
         HorizontalDivider(color = Border)
         Text("FRET BIBLE", color = Lime, style = MaterialTheme.typography.labelLarge)
