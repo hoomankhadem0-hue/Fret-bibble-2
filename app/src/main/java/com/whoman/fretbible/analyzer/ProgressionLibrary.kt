@@ -140,7 +140,7 @@ object ProgressionLibrary {
     }
 
     fun romanFor(symbol: String, key: String): String? {
-        val keyParts = key.trim().split(Regex("\s+"))
+        val keyParts = key.trim().split(Regex("\\s+"))
         if (keyParts.isEmpty()) return null
         val rootToken = symbol.trim()
         val rootName = noteNames.sortedByDescending { it.length }
