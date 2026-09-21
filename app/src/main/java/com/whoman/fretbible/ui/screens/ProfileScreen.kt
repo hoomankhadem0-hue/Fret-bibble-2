@@ -184,11 +184,10 @@ fun ProfileScreen(userName: String, onUserNameChanged: (String) -> Unit) {
                     color = Color(0xFFF4F1E9),
                     border = androidx.compose.foundation.BorderStroke(1.dp, Lime.copy(alpha = creatorGlow))
                 ) {
-                    Image(
-                        painter = painterResource(R.drawable.creator_sketch),
-                        contentDescription = "Creator sketch",
-                        modifier = Modifier.fillMaxWidth().height(210.dp),
-                        contentScale = ContentScale.Fit
+                    CreatorSketchImage(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(230.dp)
                     )
                 }
                 Spacer(Modifier.height(4.dp))
