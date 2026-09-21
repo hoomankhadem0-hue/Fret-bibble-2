@@ -15,7 +15,7 @@ import com.whoman.fretbible.ui.components.*
 import com.whoman.fretbible.ui.theme.*
 
 @Composable
-fun ProgressScreen() {
+fun ProgressScreen(userName: String) {
     val context = androidx.compose.ui.platform.LocalContext.current
     var stats by remember { mutableStateOf(PracticeStatsStore.load(context)) }
 
@@ -36,8 +36,8 @@ fun ProgressScreen() {
     ) {
         ScreenHeader(
             kicker = "PROGRESS",
-            title = "Practice, measured.",
-            subtitle = "Your totals stay on this device."
+            title = "${userName.trim()} · Progress",
+            subtitle = "Your practice at a glance."
         )
 
         SurfaceCard(modifier = Modifier.fillMaxWidth(), elevated = true) {
@@ -77,7 +77,7 @@ fun ProgressScreen() {
             MiniStat("TIME", if (hours > 0) "${hours}h ${mins}m" else "${mins}m", Modifier.weight(1f))
         }
 
-        SectionLabel("WHAT THE NUMBERS MEAN")
+        SectionLabel("KEY METRICS")
         SurfaceCard(modifier = Modifier.fillMaxWidth()) {
             MetricExplanation("Accuracy", "Correct notes divided by recorded attempts.")
             MetricExplanation("Points", "Base points plus speed and streak bonuses.")
