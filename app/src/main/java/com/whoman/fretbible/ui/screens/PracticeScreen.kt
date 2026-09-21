@@ -153,16 +153,19 @@ fun PracticeScreen(userName: String) {
 
     DisposableEffect(Unit) { onDispose { saveSession(); audio.stop() } }
 
-    LaunchedEffect(countdownToken, phase) {
-        if (countdownToken == 0 || phase != PracticePhase.COUNTDOWN) return@LaunchedEffect
+    LaunchedEffect(countdownToken) {
+        if (countdownToken == 0) return@LaunchedEffect
+
+        // The countdown owns its own coroutine. Do not key it to phase:
+        // changing phase to ACTIVE at the end must not cancel the transition.
         var value = 3
-        while (value > 0 && phase == PracticePhase.COUNTDOWN) {
+        while (value > 0 && countdownActive) {
             countdown = value
             val tone = ToneGenerator(AudioManager.STREAM_MUSIC, 72)
             try {
                 tone.startTone(
                     if (value == 1) ToneGenerator.TONE_PROP_ACK else ToneGenerator.TONE_PROP_BEEP,
-                    if (value == 1) 120 else 80
+                    if (value == 1) 140 else 90
                 )
                 delay(1000)
             } finally {
@@ -170,7 +173,8 @@ fun PracticeScreen(userName: String) {
             }
             value--
         }
-        if (phase == PracticePhase.COUNTDOWN) {
+
+        if (countdownActive && countdownToken > 0) {
             countdown = null
             countdownActive = false
             sessionStarted = true
@@ -182,24 +186,29 @@ fun PracticeScreen(userName: String) {
         }
     }
 
-
-    // Timer remains continuous across feedback so a note cannot silently stop the clock.
-    LaunchedEffect(running, index, config.timerSeconds) {
-        if (!running || !config.timerEnabled || current == null) return@LaunchedEffect
+    // One timer coroutine per target. It starts only after the session is ACTIVE
+    // and is not tied to running, so the START button cannot reappear mid-session.
+    LaunchedEffect(phase, index, config.timerSeconds) {
+        if (phase != PracticePhase.ACTIVE || !config.timerEnabled || current == null) return@LaunchedEffect
         val limit = config.timerSeconds ?: return@LaunchedEffect
         val targetIndex = index
         secondsLeft = limit
-        while (running && config.timerSeconds != null && index == targetIndex && secondsLeft > 0) {
+
+        while (phase == PracticePhase.ACTIVE && index == targetIndex && secondsLeft > 0) {
             delay(1000)
-            if (running && index == targetIndex) secondsLeft--
+            if (phase == PracticePhase.ACTIVE && index == targetIndex) {
+                secondsLeft = (secondsLeft - 1).coerceAtLeast(0)
+            }
         }
-        if (running && config.timerSeconds != null && index == targetIndex && secondsLeft == 0) {
+
+        if (phase == PracticePhase.ACTIVE && index == targetIndex && secondsLeft == 0) {
             feedback = AttemptState.WRONG_NOTE
             misses++
             streak = 0
             engine.record(current, false)
             delay(300)
-            if (running && index == targetIndex) {
+
+            if (phase == PracticePhase.ACTIVE && index == targetIndex) {
                 if (index < targets.lastIndex) {
                     index++
                     feedback = AttemptState.LISTENING
@@ -221,15 +230,20 @@ fun PracticeScreen(userName: String) {
         if (stableFrames < 2) return@LaunchedEffect
         feedback = engine.evaluate(current, d)
         if (feedback == AttemptState.CORRECT) {
+            val targetIndex = index
             val earned = config.timerSeconds?.let { limit ->
                 100 + ((120 - limit).coerceAtLeast(0) * 2) + streak * 25
             } ?: 0
             correct++; streak++; points += earned; engine.record(current, true); locked = true
             scope.launch {
                 delay(520)
-                if (index < targets.lastIndex) {
-                    index++; feedback = AttemptState.LISTENING; resetStability(); locked = false
-                } else finishSession()
+                // A timeout may have advanced the session while the success animation was playing.
+                // Never advance a second time in that case.
+                if (phase == PracticePhase.ACTIVE && index == targetIndex) {
+                    if (index < targets.lastIndex) {
+                        index++; feedback = AttemptState.LISTENING; resetStability(); locked = false
+                    } else finishSession()
+                }
             }
         } else {
             misses++; streak = 0; engine.record(current, false); locked = true
