@@ -1,36 +1,111 @@
 package com.whoman.fretbible.ui.screens
+
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.whoman.fretbible.audio.AudioSettings
+import com.whoman.fretbible.ui.components.*
 import com.whoman.fretbible.ui.theme.*
-@Composable fun ProfileScreen(onAnalyzer:()->Unit){
- val context=androidx.compose.ui.platform.LocalContext.current
- var sensitivity by remember{mutableFloatStateOf(0.00035f)}
- LaunchedEffect(Unit){AudioSettings.load(context);sensitivity=AudioSettings.sensitivity}
- Column(Modifier.fillMaxSize().padding(20.dp),verticalArrangement=Arrangement.spacedBy(16.dp)){
-  Text("MORE",color=TextMuted,style=MaterialTheme.typography.labelLarge)
-  Text("Tools & Settings",style=MaterialTheme.typography.headlineLarge)
-  Text("Everything outside the main learning flow, in one place.",color=TextSecondary)
-  Surface(shape=RoundedCornerShape(18.dp),color=ElevatedSurface,modifier=Modifier.fillMaxWidth()){Column(Modifier.padding(18.dp),verticalArrangement=Arrangement.spacedBy(8.dp)){
-   Text("ANALYZER",color=Lime,style=MaterialTheme.typography.labelLarge);Text("Song analysis",style=MaterialTheme.typography.titleLarge);Text("Key, BPM, chords and progression analysis.",color=TextSecondary)
-   OutlinedButton(onClick=onAnalyzer,modifier=Modifier.fillMaxWidth()){Text("OPEN ANALYZER")}
-  }}
-  Text("AUDIO",color=TextMuted,style=MaterialTheme.typography.labelLarge);Text("Microphone sensitivity",style=MaterialTheme.typography.titleLarge);Text("Controls how quiet a note can be before the detector ignores it.",color=TextSecondary)
-  Slider(value=sensitivity,onValueChange={sensitivity=it;AudioSettings.setSensitivity(context,it)},valueRange=0.00005f..0.006f,steps=23)
-  Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween){Text("MORE SENSITIVE",color=Lime,style=MaterialTheme.typography.labelSmall);Text("%.5f".format(sensitivity),color=TextMuted,style=MaterialTheme.typography.labelSmall);Text("LESS SENSITIVE",color=TextMuted,style=MaterialTheme.typography.labelSmall)}
-  HorizontalDivider(color=Border)
-  Text("PRACTICE",color=TextMuted,style=MaterialTheme.typography.labelLarge)
-  SettingsRow("Pitch matching","Note + octave")
-  SettingsRow("Tolerance","Cents do not block a correct note")
-  SettingsRow("Tuning","Standard E A D G B E")
-  Text("Practice mode, target count and fret range are configured at the start of each session.",color=TextSecondary,style=MaterialTheme.typography.bodySmall)
-  HorizontalDivider(color=Border)
-  Text("APP SETTINGS",color=TextMuted,style=MaterialTheme.typography.labelLarge)
-  Text("Three core settings are fixed for consistency: standard tuning, note+octave matching, and cents-independent correctness.",color=TextSecondary,style=MaterialTheme.typography.bodySmall)
-  HorizontalDivider(color=Border);Text("FRET BIBLE",color=Lime,style=MaterialTheme.typography.labelLarge);Text("made by Hooman",color=TextSecondary)
- }}
-@Composable private fun SettingsRow(title:String,value:String){Row(Modifier.fillMaxWidth().padding(vertical=8.dp),horizontalArrangement=Arrangement.SpaceBetween){Text(title);Text(value,color=TextSecondary)}}
+
+@Composable
+fun ProfileScreen(onAnalyzer: () -> Unit) {
+    val context = LocalContext.current
+    var threshold by remember { mutableFloatStateOf(0.00035f) }
+
+    LaunchedEffect(Unit) {
+        AudioSettings.load(context)
+        threshold = AudioSettings.sensitivity
+    }
+
+    val min = 0.00005f
+    val max = 0.006f
+    val sliderValue = ((max - threshold) / (max - min)).coerceIn(0f, 1f)
+    val sensitivityLabel = when {
+        sliderValue > .72f -> "High"
+        sliderValue > .42f -> "Balanced"
+        else -> "Low"
+    }
+
+    Column(
+        Modifier
+            .fillMaxSize()
+            .background(Background)
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        ScreenHeader(
+            kicker = "MORE",
+            title = "Tools & settings",
+            subtitle = "Keep the learning flow focused. Advanced tools live here."
+        )
+
+        SurfaceCard(modifier = Modifier.fillMaxWidth(), elevated = true) {
+            Text("SONG ANALYSIS", color = Lime, style = MaterialTheme.typography.labelMedium)
+            Text("Hear a track differently.", style = MaterialTheme.typography.headlineSmall)
+            Text("Explore key, tempo and harmonic structure.", color = TextSecondary, style = MaterialTheme.typography.bodyMedium)
+            PrimaryAction("OPEN ANALYZER", onAnalyzer, Modifier.fillMaxWidth())
+        }
+
+        SectionLabel("AUDIO")
+        SurfaceCard(modifier = Modifier.fillMaxWidth()) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = androidx.compose.ui.Alignment.Bottom) {
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Text("Mic threshold", style = MaterialTheme.typography.titleMedium)
+                    Text("How quiet a note can be before detection is ignored.", color = TextSecondary, style = MaterialTheme.typography.bodySmall)
+                }
+                Text(sensitivityLabel, color = Lime, style = MaterialTheme.typography.labelMedium)
+            }
+
+            Slider(
+                value = sliderValue,
+                onValueChange = {
+                    val next = max - it * (max - min)
+                    threshold = next
+                    AudioSettings.setSensitivity(context, next)
+                }
+            )
+
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text("MORE SENSITIVE", color = Lime, style = MaterialTheme.typography.labelSmall)
+                Text("LESS SENSITIVE", color = TextMuted, style = MaterialTheme.typography.labelSmall)
+            }
+
+            SecondaryAction(
+                "RESET TO DEFAULT",
+                onClick = {
+                    threshold = 0.00035f
+                    AudioSettings.setSensitivity(context, threshold)
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+
+        SectionLabel("PRACTICE RULES")
+        SurfaceCard(modifier = Modifier.fillMaxWidth()) {
+            SettingRow("Pitch matching", "Note + octave · fixed for consistent scoring")
+            SettingRow("Correctness", "Cents never block a correct note · fixed")
+            SettingRow("Tuning", "Standard E · A · D · G · B · E · fixed")
+        }
+
+        SurfaceCard(modifier = Modifier.fillMaxWidth()) {
+            Text("SESSION CONTROLS", color = TextMuted, style = MaterialTheme.typography.labelMedium)
+            Text("Questions, training mode and fret range are chosen at the beginning of each Practice session.", color = TextSecondary, style = MaterialTheme.typography.bodyMedium)
+        }
+
+        SectionLabel("ABOUT")
+        SurfaceCard(modifier = Modifier.fillMaxWidth()) {
+            Text("FRET BIBLE", color = Lime, style = MaterialTheme.typography.labelMedium)
+            Text("made by Hooman", color = TextPrimary, style = MaterialTheme.typography.titleMedium)
+            Text("Music-tech tools for learning the neck by ear and by hand.", color = TextSecondary, style = MaterialTheme.typography.bodySmall)
+        }
+
+        Spacer(Modifier.height(8.dp))
+    }
+}
