@@ -19,8 +19,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.draw.clip
 import androidx.core.content.ContextCompat
 import com.whoman.fretbible.audio.AudioEngine
 import com.whoman.fretbible.practice.*
@@ -53,6 +55,9 @@ fun PracticeScreen() {
     var stableFrames by remember { mutableIntStateOf(0) }
     var lastMidi by remember { mutableIntStateOf(-999) }
     var sessionStarted by remember { mutableStateOf(false) }
+    var sessionStartedAt by remember { mutableLongStateOf(0L) }
+    var sessionSaved by remember { mutableStateOf(false) }
+    var showTargetPosition by remember { mutableStateOf(true) }
 
     val current = targets.getOrNull(index)
     val accuracy = if (correct + misses == 0) 0 else correct * 100 / (correct + misses)
@@ -60,6 +65,13 @@ fun PracticeScreen() {
     fun resetStability() {
         stableFrames = 0
         lastMidi = -999
+    }
+
+    fun saveCurrentSession() {
+        if (!sessionStarted || sessionSaved) return
+        val elapsed = if (sessionStartedAt > 0L) ((System.currentTimeMillis() - sessionStartedAt) / 1000L) else 0L
+        PracticeStatsStore.saveSession(context, points, correct, correct + misses, elapsed)
+        sessionSaved = true
     }
 
     fun startNewSession() {
@@ -74,6 +86,8 @@ fun PracticeScreen() {
         locked = false
         resetStability()
         sessionStarted = true
+        sessionSaved = false
+        sessionStartedAt = System.currentTimeMillis()
         running = true
         scope.launch { audio.start() }
     }
@@ -111,6 +125,7 @@ fun PracticeScreen() {
                 resetStability()
                 locked = false
             } else {
+                saveCurrentSession()
                 running = false
                 audio.stop()
             }
@@ -151,6 +166,7 @@ fun PracticeScreen() {
                     resetStability()
                     locked = false
                 } else {
+                    saveCurrentSession()
                     running = false
                     audio.stop()
                 }
@@ -269,20 +285,51 @@ fun PracticeScreen() {
                 }
             }
 
-            Surface(shape = RoundedCornerShape(20.dp), color = Surface, modifier = Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(top = 12.dp, bottom = 8.dp)) {
-                    Row(
-                        Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text("TARGET POSITION", color = TextMuted, style = MaterialTheme.typography.labelSmall)
-                        Text("S${current.stringNumber} · F${current.fret}", color = Lime, style = MaterialTheme.typography.labelSmall)
+            Surface(
+                shape = RoundedCornerShape(22.dp),
+                color = Surface,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text("TARGET POSITION", color = TextMuted, style = MaterialTheme.typography.labelSmall)
+                            Text(
+                                if (showTargetPosition) "Visual guide is on" else "Train from memory",
+                                color = TextSecondary,
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                        Text("SHOW", color = TextMuted, style = MaterialTheme.typography.labelSmall)
+                        Spacer(Modifier.width(6.dp))
+                        Switch(checked = showTargetPosition, onCheckedChange = { showTargetPosition = it })
                     }
-                    Fretboard(
-                        highlightedString = current.stringNumber,
-                        highlightedFret = current.fret,
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    Box(
+                        Modifier.fillMaxWidth().height(190.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(Background)
+                    ) {
+                        Fretboard(
+                            highlightedString = current.stringNumber,
+                            highlightedFret = current.fret,
+                            modifier = Modifier.fillMaxWidth()
+                                .blur(if (showTargetPosition) 0.dp else 14.dp)
+                        )
+                        if (!showTargetPosition) {
+                            Surface(
+                                color = Background.copy(alpha = .78f),
+                                shape = RoundedCornerShape(12.dp),
+                                modifier = Modifier.align(Alignment.Center)
+                            ) {
+                                Text(
+                                    "POSITION HIDDEN",
+                                    color = TextPrimary,
+                                    style = MaterialTheme.typography.labelLarge,
+                                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 9.dp)
+                                )
+                            }
+                        }
+                    }
                 }
             }
 
