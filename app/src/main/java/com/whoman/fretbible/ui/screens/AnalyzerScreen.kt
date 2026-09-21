@@ -87,6 +87,7 @@ fun AnalyzerScreen() {
                 ResultCard("KEY", analysis.key, "${(analysis.keyConfidence * 100).roundToInt()}%", Modifier.weight(1f))
                 ResultCard("BPM", "%.1f".format(analysis.bpm), "${(analysis.bpmConfidence * 100).roundToInt()}%", Modifier.weight(1f))
             }
+            }
             Text("ANALYSIS ROADMAP", color = TextMuted, style = MaterialTheme.typography.labelLarge)
         AnalyzerStep("01", "KEY & SCALE", "Detect the tonal center and likely scale.")
         AnalyzerStep("02", "TEMPO", "Estimate BPM and beat grid.")
