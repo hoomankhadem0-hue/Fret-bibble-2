@@ -8,26 +8,23 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
-import com.whoman.fretbible.R
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
 import com.whoman.fretbible.R
+import com.whoman.fretbible.ui.components.AnimatedBackground
+import com.whoman.fretbible.ui.components.PrimaryAction
 import com.whoman.fretbible.ui.theme.*
-import com.whoman.fretbible.ui.components.*
 import kotlinx.coroutines.delay
 
 @Composable
@@ -75,7 +72,11 @@ fun NameOnboardingScreen(onNameSaved: (String) -> Unit) {
                 }
 
                 Spacer(Modifier.height(24.dp))
-                Text("Welcome to Fret Bible.", style = MaterialTheme.typography.headlineMedium)
+                Text(
+                    "Welcome to Fret Bible.",
+                    color = TextPrimary,
+                    style = MaterialTheme.typography.headlineMedium
+                )
                 Spacer(Modifier.height(7.dp))
                 Text(
                     "What should we call you?",
