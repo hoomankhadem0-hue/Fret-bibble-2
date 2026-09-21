@@ -1,14 +1,17 @@
 package com.whoman.fretbible.ui.theme
 
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.unit.sp
 
 val Background = Color(0xFF080A0C)
@@ -19,7 +22,7 @@ val Border = Color(0xFF252B33)
 val TextPrimary = Color(0xFFF4F6F8)
 val TextSecondary = Color(0xFF9CA5B2)
 val TextMuted = Color(0xFF65707C)
-val Lime = Color(0xFF5F781F)
+val Lime = Color(0xFF9DBB4D)
 val LimeSoft = Lime.copy(alpha = .12f)
 val Warning = Color(0xFFF2C94C)
 val Error = Color(0xFFFF5C67)
@@ -72,6 +75,13 @@ fun FretBibleTheme(content: @Composable () -> Unit) {
             labelMedium = TextStyle(fontFamily = sans, fontWeight = FontWeight.Bold, fontSize = 11.sp, letterSpacing = .65.sp),
             labelSmall = TextStyle(fontFamily = sans, fontWeight = FontWeight.Bold, fontSize = 10.sp, letterSpacing = .55.sp)
         ),
-        content = content
+        content = {
+            Surface(
+                modifier = Modifier.fillMaxSize(),
+                color = Background,
+                contentColor = TextPrimary,
+                tonalElevation = 0.dp
+            ) { content() }
+        }
     )
 }
