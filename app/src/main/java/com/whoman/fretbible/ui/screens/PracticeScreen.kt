@@ -173,7 +173,7 @@ fun PracticeScreen(userName: String) {
     }
 
 
-    LaunchedEffect(running, index, config.timerSeconds) {
+    // Timer remains continuous across feedback so a note cannot silently stop the clock.\n    LaunchedEffect(running, index, config.timerSeconds) {
         if (!running || !config.timerEnabled || current == null) return@LaunchedEffect
         val limit = config.timerSeconds ?: return@LaunchedEffect
         val targetIndex = index
