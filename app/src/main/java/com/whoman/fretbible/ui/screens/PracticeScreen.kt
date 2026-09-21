@@ -375,7 +375,107 @@ fun PracticeScreen(userName: String) {
                             }
                         }
                         Text(
-                            when (phase) {
+                            when {
+                                hideTargetPosition -> "Play the note without using the position cue."
+                                current.fret == 0 -> "Open string"
+                                else -> "Position on the neck · fret ${current.fret}"
+                            },
+                            color = TextSecondary,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+
+                    SurfaceCard(modifier = Modifier.fillMaxWidth()) {
+                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                                Text("POSITION VISIBILITY", color = TextMuted, style = MaterialTheme.typography.labelSmall)
+                                Text(
+                                    if (hideTargetPosition) "Hidden · recall from memory" else "Visible · use as a reference",
+                                    color = TextPrimary,
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+                            Switch(
+                                checked = hideTargetPosition,
+                                onCheckedChange = { hideTargetPosition = it }
+                            )
+                        }
+                        Box(
+                            Modifier
+                                .fillMaxWidth()
+                                .height(148.dp)
+                                .clip(RoundedCornerShape(15.dp))
+                                .background(Background)
+                        ) {
+                            Fretboard(
+                                highlightedString = if (hideTargetPosition) null else current.stringNumber,
+                                highlightedFret = if (hideTargetPosition) null else current.fret,
+                                maxFret = config.maxFret,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            if (hideTargetPosition) {
+                                Surface(
+                                    shape = RoundedCornerShape(999.dp),
+                                    color = ElevatedSurface.copy(alpha = .94f),
+                                    border = androidx.compose.foundation.BorderStroke(1.dp, Border),
+                                ) {
+                                    Text(
+                                        "POSITION HIDDEN",
+                                        color = TextSecondary,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        modifier = Modifier.padding(horizontal = 13.dp, vertical = 8.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    SurfaceCard(modifier = Modifier.fillMaxWidth()) {
+                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                                Text(if (running) "MIC ACTIVE" else "READY", color = if (running) Lime else TextMuted, style = MaterialTheme.typography.labelSmall)
+                                Text(status, color = statusColor, style = MaterialTheme.typography.titleLarge)
+                            }
+                            Surface(shape = RoundedCornerShape(12.dp), color = LimeSoft) {
+                                Text(
+                                    detected?.let { it.note.display + it.octave } ?: "—",
+                                    color = TextPrimary,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp)
+                                )
+                            }
+                        }
+                        PitchMeter(detected)
+                        Text(
+                            detected?.let {
+                                "${it.frequencyHz.toInt()} Hz · ${if (it.cents >= 0) "+" else ""}${it.cents.toInt()}¢"
+                            } ?: "Play one clean note · mute the other strings",
+                            color = TextMuted,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
+
+                if (denied) {
+                    SurfaceCard(modifier = Modifier.fillMaxWidth()) {
+                        Text("Microphone permission is required for practice.", color = Error, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+
+                Spacer(Modifier.height(6.dp))
+            }
+
+            Surface(
+                color = SurfaceStrong,
+                tonalElevation = 8.dp,
+                shadowElevation = 0.dp,
+                border = androidx.compose.foundation.BorderStroke(1.dp, Border)
+            ) {
+                Row(
+                    Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    when (phase) {
                         PracticePhase.COUNTDOWN -> {
                             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                                 Text("GET READY", color = Lime, style = MaterialTheme.typography.labelSmall)
