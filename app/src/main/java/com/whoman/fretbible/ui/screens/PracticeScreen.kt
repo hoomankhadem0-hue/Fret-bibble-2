@@ -30,7 +30,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
-fun PracticeScreen() {
+fun PracticeScreen(userName: String) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val audio = remember { AudioEngine() }
@@ -159,7 +159,10 @@ fun PracticeScreen() {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                         Text("PRACTICE", color = Lime, style = MaterialTheme.typography.labelMedium)
-                        Text(if (running) "Note recognition" else "Build a session", style = MaterialTheme.typography.titleLarge)
+                        Text(
+                            if (running) "${userName.trim()} · Note recognition" else "Practice, ${userName.trim()}",
+                            style = MaterialTheme.typography.titleLarge
+                        )
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         MetricPill("PTS", points.toString())
