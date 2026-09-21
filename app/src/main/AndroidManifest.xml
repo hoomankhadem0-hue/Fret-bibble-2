@@ -4,7 +4,7 @@
     <application
         android:allowBackup="true"
         android:icon="@drawable/ic_fret_bible_mark"
-        android:roundIcon="@drawable/ic_fret_bible"
+        android:roundIcon="@drawable/ic_fret_bible_mark"
         android:label="Fret Bible"
         android:supportsRtl="true"
         android:theme="@style/Theme.FretBible">
