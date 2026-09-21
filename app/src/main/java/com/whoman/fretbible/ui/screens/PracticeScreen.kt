@@ -22,6 +22,8 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.whoman.fretbible.audio.AudioEngine
@@ -669,7 +671,7 @@ private fun TimerPickerDialog(
     onSave: (Int?) -> Unit
 ) {
     var enabled by remember(initialSeconds) { mutableStateOf(initialSeconds != null) }
-    var seconds by remember(initialSeconds) { mutableFloatStateOf((initialSeconds ?: 10).toFloat()) }
+    var secondsText by remember(initialSeconds) { mutableStateOf((initialSeconds ?: 10).toString()) }
 
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Surface(
@@ -700,22 +702,28 @@ private fun TimerPickerDialog(
                 }
 
                 if (enabled) {
-                    Text(seconds.toInt().toString() + " s", color = Lime, style = MaterialTheme.typography.displayMedium)
-                    Slider(
-                        value = seconds,
-                        onValueChange = { seconds = it },
-                        valueRange = 1f..120f,
-                        steps = 118
+                    OutlinedTextField(
+                        value = secondsText,
+                        onValueChange = { value ->
+                            secondsText = value.filter(Char::isDigit).take(3)
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        label = { Text("Seconds per note") },
+                        suffix = { Text("sec", color = TextMuted) },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        supportingText = {
+                            Text("1–600 seconds. Shorter limits earn more points.", color = TextMuted)
+                        }
                     )
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("1s · HIGHER SCORE", color = TextMuted, style = MaterialTheme.typography.labelSmall)
-                        Text("120s · LOWER SCORE", color = TextMuted, style = MaterialTheme.typography.labelSmall)
-                    }
                 }
 
                 PrimaryAction(
                     "SAVE",
-                    onClick = { onSave(if (enabled) seconds.toInt().coerceIn(1, 120) else null) },
+                    onClick = {
+                        val parsed = secondsText.toIntOrNull()?.coerceIn(1, 600) ?: 10
+                        onSave(if (enabled) parsed else null)
+                    },
                     modifier = Modifier.fillMaxWidth()
                 )
             }
