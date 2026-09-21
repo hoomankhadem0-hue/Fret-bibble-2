@@ -65,6 +65,7 @@ fun PracticeScreen(userName: String) {
     var denied by remember { mutableStateOf(false) }
     var secondsLeft by remember { mutableIntStateOf(config.timerSeconds ?: 0) }
     var countdown by remember { mutableStateOf<Int?>(null) }
+    var countdownActive by remember { mutableStateOf(false) }
     var countdownToken by remember { mutableIntStateOf(0) }
     var overview by remember { mutableStateOf<PracticeSessionOverview?>(null) }
     var stableFrames by remember { mutableIntStateOf(0) }
@@ -135,6 +136,7 @@ fun PracticeScreen(userName: String) {
         sessionStartedAt = 0L
         overview = null
         countdown = 3
+        countdownActive = true
         countdownToken++
     }
 
@@ -165,6 +167,7 @@ fun PracticeScreen(userName: String) {
         sessionStarted = true
         sessionSaved = false
         sessionStartedAt = System.currentTimeMillis()
+        countdownActive = false
         running = true
         scope.launch { audio.start() }
     }
@@ -463,6 +466,12 @@ fun PracticeScreen(userName: String) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     when {
+                        countdownActive -> {
+                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                Text("GET READY", color = Lime, style = MaterialTheme.typography.labelSmall)
+                                Text("Starting in ${countdown ?: 0}s", color = TextPrimary, style = MaterialTheme.typography.bodySmall)
+                            }
+                        }
                         running -> {
                             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                                 Text("SESSION ACTIVE", color = TextMuted, style = MaterialTheme.typography.labelSmall)
