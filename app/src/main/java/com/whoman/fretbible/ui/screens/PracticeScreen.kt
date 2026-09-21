@@ -56,7 +56,7 @@ fun PracticeScreen(userName: String) {
     var sessionStarted by remember { mutableStateOf(false) }
     var sessionSaved by remember { mutableStateOf(false) }
     var sessionStartedAt by remember { mutableLongStateOf(0L) }
-    var hideTargetPosition by remember { mutableStateOf(false) }
+    var hideTargetPosition by remember { mutableStateOf(true) }
     var dialog by remember { mutableStateOf("") }
 
     val current = targets.getOrNull(index)
