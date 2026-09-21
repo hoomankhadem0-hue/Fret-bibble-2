@@ -244,19 +244,25 @@ fun PracticeScreen() {
                     SurfaceCard(modifier = Modifier.fillMaxWidth(), elevated = true) {
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                             Text("FIND THIS NOTE", color = TextMuted, style = MaterialTheme.typography.labelMedium)
-                            if (running && !hideTargetPosition) {
-                                Text(if (current.fret == 0) "OPEN" else "FRET ${current.fret}", color = Lime, style = MaterialTheme.typography.labelSmall)
+                            if (running) {
+                                Row(horizontalArrangement = Arrangement.spacedBy(5.dp), verticalAlignment = Alignment.CenterVertically) {
+                                    Text("FRET", color = TextMuted, style = MaterialTheme.typography.labelSmall)
+                                    Text(
+                                        if (current.fret == 0) "OPEN" else current.fret.toString(),
+                                        color = Lime,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        modifier = Modifier.blur(if (hideTargetPosition && current.fret != 0) 6.dp else 0.dp)
+                                    )
+                                }
                             }
                         }
                         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
                             Crossfade(targetState = current.note.display + current.octave, label = "targetNote") { value ->
                                 Text(value, color = Lime, style = MaterialTheme.typography.displayMedium, modifier = Modifier.weight(1f))
                             }
-                            if (!hideTargetPosition) {
-                                Column(horizontalAlignment = Alignment.End) {
-                                    Text("STRING", color = TextMuted, style = MaterialTheme.typography.labelSmall)
-                                    Text("${current.stringNumber}", color = TextPrimary, style = MaterialTheme.typography.titleLarge)
-                                }
+                            Column(horizontalAlignment = Alignment.End) {
+                                Text("STRING", color = TextMuted, style = MaterialTheme.typography.labelSmall)
+                                Text("${current.stringNumber}", color = TextPrimary, style = MaterialTheme.typography.titleLarge)
                             }
                         }
                         Text(
