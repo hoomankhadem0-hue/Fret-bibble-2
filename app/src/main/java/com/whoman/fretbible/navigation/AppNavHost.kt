@@ -11,7 +11,7 @@ import androidx.compose.foundation.layout.padding
 import com.whoman.fretbible.ui.screens.*
 import com.whoman.fretbible.ui.theme.*
 
-private enum class Route { Home, Practice, Roadmap, Progress, Profile }
+private enum class Route { Home, Practice, Analyzer, Roadmap, Progress, Profile }
 
 @Composable
 fun AppNavHost() {
@@ -29,6 +29,7 @@ fun AppNavHost() {
                     val items = listOf(
                         Route.Home to Icons.Default.Home,
                         Route.Practice to Icons.Default.PlayArrow,
+                        Route.Analyzer to Icons.Default.GraphicEq,
                         Route.Roadmap to Icons.Default.Map,
                         Route.Progress to Icons.Default.BarChart,
                         Route.Profile to Icons.Default.Person
@@ -53,6 +54,7 @@ fun AppNavHost() {
             when (current) {
                 Route.Home -> HomeScreen { route = Route.Practice }
                 Route.Practice -> PracticeScreen()
+                Route.Analyzer -> AnalyzerScreen()
                 Route.Roadmap -> RoadmapScreen()
                 Route.Progress -> ProgressScreen()
                 Route.Profile -> ProfileScreen()
