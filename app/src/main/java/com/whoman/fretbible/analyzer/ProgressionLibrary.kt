@@ -129,7 +129,7 @@ object ProgressionLibrary {
     ).map { it.copy(numerals = it.numerals.map { n -> normalize(n) }) }
 
     private fun p(name: String, genre: String, pattern: String, weight: Double = 1.0) =
-        ProgressionPattern(name, genre, pattern.split(" "), emptyList(), weight).let {
+        ProgressionPattern(name, genre, pattern.split(" "), weight).let {
             it.copy(numerals = pattern.split(" "))
         }
 
