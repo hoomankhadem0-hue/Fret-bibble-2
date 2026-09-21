@@ -205,7 +205,7 @@ fun PracticeScreen(userName: String) {
                 delay(520)
                 if (index < targets.lastIndex) {
                     index++; feedback = AttemptState.LISTENING; resetStability(); locked = false
-                } else finish()
+                } else finishSession()
             }
         } else {
             misses++; streak = 0; engine.record(current, false); locked = true
@@ -533,54 +533,54 @@ fun PracticeScreen(userName: String) {
             }
         }
 
-        if (dialog.isNotEmpty() && countdown == null) {
+        overview?.let { result ->
+            Surface(
+                Modifier.fillMaxSize(),
+                color = Color.Black.copy(alpha = .58f)
+            ) {}
+            PracticeOverviewDialog(
+                result = result,
+                onDismiss = { overview = null }
+            )
+        }
+
+        if (dialog.isNotEmpty() && countdown == null) && overview == null) {
             Surface(
                 Modifier.fillMaxSize(),
                 color = Color.Black.copy(alpha = .46f)
             ) {}
-            PracticeChoiceDialog(
-                title = when (dialog) {
-                    "count" -> "Questions"
-                    "mode" -> "Training mode"
-                    else -> "Timer"
-                },
-                subtitle = when (dialog) {
-                    "count" -> "Choose the size of this session."
-                    "mode" -> "Change how targets are selected."
-                    else -> "Set a time limit or practice without one."
-                },
-                options = when (dialog) {
-                    "count" -> listOf("10 questions" to 10, "20 questions" to 20, "24 questions" to 24, "30 questions" to 30, "50 questions" to 50)
-                    "mode" -> PracticeMode.entries.map { it.label to it.ordinal }
-                    else -> listOf(
-                        "No timer · training · no score" to 0,
-                        "3 seconds · high score" to 3,
-                        "5 seconds" to 5,
-                        "7 seconds" to 7,
-                        "10 seconds" to 10,
-                        "15 seconds" to 15,
-                        "20 seconds" to 20,
-                        "30 seconds" to 30,
-                        "60 seconds" to 60,
-                        "120 seconds" to 120
-                    )
-                },
-                selected = when (dialog) {
-                    "count" -> config.count
-                    "mode" -> config.mode.ordinal
-                    else -> config.timerSeconds ?: 0
-                },
-                onSelect = { value ->
-                    when (dialog) {
-                        "count" -> config = config.copy(count = value)
-                        "mode" -> config = config.copy(mode = PracticeMode.entries[value])
-                        else -> config = config.copy(timerSeconds = value.takeIf { it > 0 })
+            if (dialog == "timer") {
+                TimerPickerDialog(
+                    initialSeconds = config.timerSeconds,
+                    onDismiss = { dialog = "" },
+                    onSave = { seconds ->
+                        config = config.copy(timerSeconds = seconds)
+                        PracticePreferences.save(context, config)
+                        dialog = ""
                     }
-                    PracticePreferences.save(context, config)
-                    dialog = ""
-                },
-                onDismiss = { dialog = "" }
-            )
+                )
+            } else {
+                PracticeChoiceDialog(
+                    title = if (dialog == "count") "Questions" else "Training mode",
+                    subtitle = if (dialog == "count") "Choose the session size." else "Change target selection.",
+                    options = if (dialog == "count") {
+                        listOf("10 questions" to 10, "20 questions" to 20, "24 questions" to 24, "30 questions" to 30, "50 questions" to 50)
+                    } else {
+                        PracticeMode.entries.map { it.label to it.ordinal }
+                    },
+                    selected = if (dialog == "count") config.count else config.mode.ordinal,
+                    onSelect = { value ->
+                        if (dialog == "count") {
+                            config = config.copy(count = value)
+                        } else {
+                            config = config.copy(mode = PracticeMode.entries[value])
+                        }
+                        PracticePreferences.save(context, config)
+                        dialog = ""
+                    },
+                    onDismiss = { dialog = "" }
+                )
+            }
         }
     }
 }
@@ -628,6 +628,121 @@ private fun PracticeChoiceDialog(
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TimerPickerDialog(
+    initialSeconds: Int?,
+    onDismiss: () -> Unit,
+    onSave: (Int?) -> Unit
+) {
+    var enabled by remember(initialSeconds) { mutableStateOf(initialSeconds != null) }
+    var seconds by remember(initialSeconds) { mutableFloatStateOf((initialSeconds ?: 10).toFloat()) }
+
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Surface(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 22.dp),
+            shape = RoundedCornerShape(24.dp),
+            color = ElevatedSurface,
+            border = androidx.compose.foundation.BorderStroke(1.dp, Border)
+        ) {
+            Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("Timer", color = TextPrimary, style = MaterialTheme.typography.headlineSmall)
+                        Text("Training has no score. Timed sessions reward shorter limits.", color = TextSecondary, style = MaterialTheme.typography.bodySmall)
+                    }
+                    TextButton(onClick = onDismiss) { Text("CLOSE", color = TextMuted) }
+                }
+
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text("Timed session", color = TextPrimary, style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            if (enabled) seconds.toInt().toString() + " seconds per note" else "Training · no score",
+                            color = TextSecondary,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                    Switch(checked = enabled, onCheckedChange = { enabled = it })
+                }
+
+                if (enabled) {
+                    Text(seconds.toInt().toString() + " s", color = Lime, style = MaterialTheme.typography.displayMedium)
+                    Slider(
+                        value = seconds,
+                        onValueChange = { seconds = it },
+                        valueRange = 1f..120f,
+                        steps = 118
+                    )
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text("1s · HIGHER SCORE", color = TextMuted, style = MaterialTheme.typography.labelSmall)
+                        Text("120s · LOWER SCORE", color = TextMuted, style = MaterialTheme.typography.labelSmall)
+                    }
+                }
+
+                PrimaryAction(
+                    "SAVE",
+                    onClick = { onSave(if (enabled) seconds.toInt().coerceIn(1, 120) else null) },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun PracticeOverviewDialog(
+    result: PracticeSessionOverview,
+    onDismiss: () -> Unit
+) {
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Surface(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 22.dp),
+            shape = RoundedCornerShape(24.dp),
+            color = ElevatedSurface,
+            border = androidx.compose.foundation.BorderStroke(1.dp, Border)
+        ) {
+            Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                Text(
+                    if (result.penalty > 0) "SESSION ENDED" else "SESSION COMPLETE",
+                    color = Lime,
+                    style = MaterialTheme.typography.labelMedium
+                )
+                Text(
+                    result.points.toString() + " pts",
+                    color = if (result.points < 0) Error else TextPrimary,
+                    style = MaterialTheme.typography.displayMedium
+                )
+                if (result.penalty > 0) {
+                    Text(
+                        "-" + result.penalty.toString() + " point penalty for ending early.",
+                        color = Warning,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    MiniStat("QUESTIONS", result.completed.toString() + "/" + result.total.toString(), Modifier.weight(1f))
+                    MiniStat("ACCURACY", result.accuracy.toString() + "%", Modifier.weight(1f), accent = true)
+                }
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    MiniStat("CORRECT", result.correct.toString(), Modifier.weight(1f))
+                    MiniStat(
+                        "TIME",
+                        if (result.elapsedSeconds >= 60) (result.elapsedSeconds / 60).toString() + "m " + (result.elapsedSeconds % 60).toString() + "s" else result.elapsedSeconds.toString() + "s",
+                        Modifier.weight(1f)
+                    )
+                }
+                Text(
+                    if (result.timerSeconds == null) "Training mode · no score" else result.timerSeconds.toString() + "s per note",
+                    color = TextSecondary,
+                    style = MaterialTheme.typography.bodySmall
+                )
+                PrimaryAction("DONE", onClick = onDismiss, modifier = Modifier.fillMaxWidth())
             }
         }
     }
