@@ -127,6 +127,9 @@ fun PracticeScreen(userName: String) {
     }
 
     fun startNew() {
+        // A session can only be started from READY/COMPLETE. This prevents a second
+        // countdown or a second START action while the first session is already running.
+        if (phase == PracticePhase.COUNTDOWN || phase == PracticePhase.ACTIVE) return
         PracticePreferences.save(context, config)
         targets = engine.newSession(config.count, config.maxFret, config.mode)
         index = 0
@@ -137,6 +140,7 @@ fun PracticeScreen(userName: String) {
         secondsLeft = config.timerSeconds ?: 0
         feedback = AttemptState.LISTENING
         locked = false
+        running = false
         resetStability()
         sessionStarted = false
         sessionSaved = false
@@ -163,15 +167,17 @@ fun PracticeScreen(userName: String) {
         var value = 3
         while (value > 0 && countdownActive) {
             countdown = value
-            val tone = ToneGenerator(AudioManager.STREAM_MUSIC, 72)
-            try {
-                tone.startTone(
-                    if (value == 1) ToneGenerator.TONE_PROP_ACK else ToneGenerator.TONE_PROP_BEEP,
-                    if (value == 1) 140 else 90
-                )
+            runCatching {
+                ToneGenerator(AudioManager.STREAM_MUSIC, 72).use { tone ->
+                    tone.startTone(
+                        if (value == 1) ToneGenerator.TONE_PROP_ACK else ToneGenerator.TONE_PROP_BEEP,
+                        if (value == 1) 140 else 90
+                    )
+                    delay(1000)
+                }
+            }.getOrElse {
+                // A device may reject ToneGenerator; the visual countdown still continues.
                 delay(1000)
-            } finally {
-                tone.release()
             }
             value--
         }
@@ -234,7 +240,7 @@ fun PracticeScreen(userName: String) {
         if (feedback == AttemptState.CORRECT) {
             val targetIndex = index
             val earned = config.timerSeconds?.let { limit ->
-                100 + ((120 - limit).coerceAtLeast(0) * 2) + streak * 25
+                100 + ((601 - limit).coerceAtLeast(1) / 6) + streak * 25
             } ?: 0
             correct++; streak++; points += earned; engine.record(current, true); locked = true
             scope.launch {
