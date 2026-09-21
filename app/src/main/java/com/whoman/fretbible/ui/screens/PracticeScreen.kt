@@ -66,7 +66,7 @@ fun PracticeScreen(userName: String) {
     var secondsLeft by remember { mutableIntStateOf(config.timerSeconds ?: 0) }
     var countdown by remember { mutableStateOf<Int?>(null) }
     var countdownToken by remember { mutableIntStateOf(0) }
-    var overview by remember { mutableStateOf<PracticeSessionOverview?>(null)
+    var overview by remember { mutableStateOf<PracticeSessionOverview?>(null) }
     var stableFrames by remember { mutableIntStateOf(0) }
     var lastMidi by remember { mutableIntStateOf(-999) }
     var sessionStarted by remember { mutableStateOf(false) }
