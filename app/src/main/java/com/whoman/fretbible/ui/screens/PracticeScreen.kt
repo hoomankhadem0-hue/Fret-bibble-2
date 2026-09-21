@@ -31,6 +31,20 @@ import com.whoman.fretbible.ui.theme.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+private const val END_SESSION_PENALTY = 100
+
+private data class PracticeSessionOverview(
+    val completed: Int,
+    val total: Int,
+    val correct: Int,
+    val attempts: Int,
+    val accuracy: Int,
+    val points: Int,
+    val penalty: Int,
+    val elapsedSeconds: Long,
+    val timerSeconds: Int?
+)
+
 @Composable
 fun PracticeScreen(userName: String) {
     val context = LocalContext.current
@@ -51,6 +65,8 @@ fun PracticeScreen(userName: String) {
     var denied by remember { mutableStateOf(false) }
     var secondsLeft by remember { mutableIntStateOf(config.timerSeconds ?: 0) }
     var countdown by remember { mutableStateOf<Int?>(null) }
+    var countdownToken by remember { mutableIntStateOf(0) }
+    var overview by remember { mutableStateOf<PracticeSessionOverview?>(null)
     var stableFrames by remember { mutableIntStateOf(0) }
     var lastMidi by remember { mutableIntStateOf(-999) }
     var sessionStarted by remember { mutableStateOf(false) }
@@ -63,13 +79,45 @@ fun PracticeScreen(userName: String) {
     val accuracy = if (correct + misses == 0) 0 else correct * 100 / (correct + misses)
 
     fun resetStability() { stableFrames = 0; lastMidi = -999 }
+
+    fun currentElapsedSeconds(): Long =
+        if (sessionStartedAt > 0L) (System.currentTimeMillis() - sessionStartedAt) / 1000L else 0L
+
     fun saveSession() {
         if (!sessionStarted || sessionSaved) return
-        val elapsed = if (sessionStartedAt > 0L) (System.currentTimeMillis() - sessionStartedAt) / 1000L else 0L
-        PracticeStatsStore.saveSession(context, points, correct, correct + misses, elapsed)
+        PracticeStatsStore.saveSession(context, points, correct, correct + misses, currentElapsedSeconds())
         sessionSaved = true
     }
-    fun finish() { running = false; audio.stop(); saveSession() }
+
+    fun finishSession(penalty: Int = 0) {
+        if (!sessionStarted || sessionSaved) return
+        running = false
+        countdown = null
+        audio.stop()
+        val elapsed = currentElapsedSeconds()
+        val attempts = correct + misses
+        PracticeStatsStore.saveSession(context, points, correct, attempts, elapsed)
+        sessionSaved = true
+        overview = PracticeSessionOverview(
+            completed = attempts.coerceAtMost(targets.size),
+            total = targets.size,
+            correct = correct,
+            attempts = attempts,
+            accuracy = if (attempts == 0) 0 else correct * 100 / attempts,
+            points = points,
+            penalty = penalty,
+            elapsedSeconds = elapsed,
+            timerSeconds = config.timerSeconds
+        )
+    }
+
+    fun endSession() {
+        if (!running) return
+        val penalty = if (config.timerSeconds != null) END_SESSION_PENALTY else 0
+        if (penalty > 0) points -= penalty
+        finishSession(penalty)
+    }
+
     fun startNew() {
         PracticePreferences.save(context, config)
         targets = engine.newSession(config.count, config.maxFret, config.mode)
@@ -85,7 +133,9 @@ fun PracticeScreen(userName: String) {
         sessionStarted = false
         sessionSaved = false
         sessionStartedAt = 0L
+        overview = null
         countdown = 3
+        countdownToken++
     }
 
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -95,25 +145,30 @@ fun PracticeScreen(userName: String) {
 
     DisposableEffect(Unit) { onDispose { saveSession(); audio.stop() } }
 
-    LaunchedEffect(countdown) {
-        val start = countdown ?: return@LaunchedEffect
-        var value = start
-        while (value > 0 && countdown != null) {
+    LaunchedEffect(countdownToken) {
+        if (countdownToken == 0) return@LaunchedEffect
+        var value = 3
+        while (value > 0) {
             val tone = ToneGenerator(AudioManager.STREAM_MUSIC, 72)
-            tone.startTone(ToneGenerator.TONE_PROP_BEEP, 90)
-            delay(1000)
-            tone.release()
+            try {
+                tone.startTone(
+                    if (value == 1) ToneGenerator.TONE_PROP_ACK else ToneGenerator.TONE_PROP_BEEP,
+                    if (value == 1) 120 else 80
+                )
+                delay(1000)
+            } finally {
+                tone.release()
+            }
             value--
-            countdown = if (value > 0) value else null
+            countdown = value.takeIf { it > 0 }
         }
-        if (start == 3 && countdown == null) {
-            sessionStarted = true
-            sessionSaved = false
-            sessionStartedAt = System.currentTimeMillis()
-            running = true
-            scope.launch { audio.start() }
-        }
+        sessionStarted = true
+        sessionSaved = false
+        sessionStartedAt = System.currentTimeMillis()
+        running = true
+        scope.launch { audio.start() }
     }
+
 
     LaunchedEffect(running, index, config.timerSeconds) {
         if (!running || !config.timerEnabled || current == null || locked) return@LaunchedEffect
@@ -129,7 +184,7 @@ fun PracticeScreen(userName: String) {
             delay(350)
             if (index < targets.lastIndex) {
                 index++; feedback = AttemptState.LISTENING; resetStability(); locked = false
-            } else finish()
+            } else finishSession()
         }
     }
 
@@ -236,7 +291,7 @@ fun PracticeScreen(userName: String) {
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                                 Text("SESSION SETUP", color = Lime, style = MaterialTheme.typography.labelMedium)
-                                Text("Dial in the workout", style = MaterialTheme.typography.titleLarge)
+                                Text("Dial in the workout", color = TextPrimary, style = MaterialTheme.typography.titleLarge)
                             }
                             Text("${config.count}", color = TextPrimary, style = MaterialTheme.typography.headlineSmall)
                         }
