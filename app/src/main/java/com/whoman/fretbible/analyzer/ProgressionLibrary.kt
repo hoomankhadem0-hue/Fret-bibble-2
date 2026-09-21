@@ -14,7 +14,6 @@ data class ProgressionPattern(
 )
 
 object ProgressionLibrary {
-    private val noteNames = listOf("C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B")
     private val noteNames = listOf("C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B")
 
     val patterns: List<ProgressionPattern> = listOf(
