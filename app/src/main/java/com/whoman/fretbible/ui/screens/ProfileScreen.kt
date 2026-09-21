@@ -166,19 +166,31 @@ fun ProfileScreen(userName: String, onUserNameChanged: (String) -> Unit) {
             SectionLabel("ABOUT THE CREATOR")
             SurfaceCard(modifier = Modifier.fillMaxWidth(), elevated = true) {
                 Surface(
-                    modifier = Modifier.fillMaxWidth().height(210.dp),
-                    shape = RoundedCornerShape(18.dp),
-                    color = androidx.compose.ui.graphics.Color(0xFFF4F1E9)
-                ) {
-                    Image(
-                        painter = creatorArtwork,
-                        contentDescription = "Creator sketch",
-                        modifier = Modifier.fillMaxWidth().height(210.dp),
-                        contentScale = androidx.compose.ui.layout.ContentScale.Fit,
-                        alpha = cardAlpha
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(1.38f),
+                    shape = RoundedCornerShape(20.dp),
+                    color = androidx.compose.ui.graphics.Color(0xFFF4F1E9),
+                    border = androidx.compose.foundation.BorderStroke(
+                        1.dp,
+                        Lime.copy(alpha = 0.16f + 0.10f * cardAlpha)
                     )
+                ) {
+                    Box(
+                        Modifier
+                            .fillMaxSize()
+                            .padding(6.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Image(
+                            painter = creatorArtwork,
+                            contentDescription = "Creator sketch",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = androidx.compose.ui.layout.ContentScale.Fit
+                        )
+                    }
                 }
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(10.dp))
                 Text("Hooman", color = TextPrimary, style = MaterialTheme.typography.titleLarge)
                 ContactRow("Instagram", "@Its__whoman") {
                     uriHandler.openUri("https://instagram.com/Its__whoman")
