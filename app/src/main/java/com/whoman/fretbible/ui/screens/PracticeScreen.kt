@@ -544,7 +544,7 @@ fun PracticeScreen(userName: String) {
             )
         }
 
-        if (dialog.isNotEmpty() && countdown == null) && overview == null) {
+        if (dialog.isNotEmpty() && countdown == null && overview == null) {
             Surface(
                 Modifier.fillMaxSize(),
                 color = Color.Black.copy(alpha = .46f)
