@@ -2,6 +2,7 @@ package com.whoman.fretbible.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -65,7 +66,10 @@ fun HomeScreen(onStartPractice: () -> Unit, onOpenDictionary: () -> Unit) {
                         Text("Standard tuning", style = MaterialTheme.typography.titleMedium)
                         Text("Open strings → fret 12 · tap to open the full note dictionary", color = TextSecondary, style = MaterialTheme.typography.bodySmall)
                     }
-                    Text("E A D G B E", color = Lime, style = MaterialTheme.typography.labelMedium)
+                    Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                        Text("E A D G B E", color = Lime, style = MaterialTheme.typography.labelMedium)
+                        Text("OPEN  ↗", color = TextMuted, style = MaterialTheme.typography.labelSmall)
+                    }
                     Text("OPEN", color = Lime, style = MaterialTheme.typography.labelSmall)
                 }
                 HomeFretboard()
@@ -78,7 +82,7 @@ fun HomeScreen(onStartPractice: () -> Unit, onOpenDictionary: () -> Unit) {
                 LoopStep("03", "Learn", "Get feedback and build recall.")
             }
 
-            SurfaceCard(modifier = Modifier.fillMaxWidth()) {
+            SurfaceCard(modifier = Modifier.fillMaxWidth().clickable(onClick = onOpenDictionary)) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                         Text("BUILT FOR CONSISTENCY", color = Lime, style = MaterialTheme.typography.labelMedium)
