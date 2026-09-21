@@ -25,8 +25,8 @@ fun FretboardExplorerScreen(onBack: () -> Unit) {
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         ScreenHeader(
-            kicker = "FRETBOARD",
-            title = "Explore the neck.",
+            kicker = "NOTE DICTIONARY",
+            title = "Fretboard dictionary.",
             subtitle = "Standard tuning · open string to fret $maxFret",
             action = { TextButton(onClick = onBack) { Text("DONE", color = TextSecondary) } }
         )
