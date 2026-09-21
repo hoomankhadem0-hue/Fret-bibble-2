@@ -87,62 +87,7 @@ fun AnalyzerScreen() {
                 ResultCard("KEY", analysis.key, "${(analysis.keyConfidence * 100).roundToInt()}%", Modifier.weight(1f))
                 ResultCard("BPM", "%.1f".format(analysis.bpm), "${(analysis.bpmConfidence * 100).roundToInt()}%", Modifier.weight(1f))
             }
-            if (analysis.progressionMatches.isNotEmpty()) {
-                Text("DETECTED PROGRESSIONS", color = TextMuted, style = MaterialTheme.typography.labelLarge)
-                Card(colors = CardDefaults.cardColors(containerColor = Surface), shape = RoundedCornerShape(18.dp), modifier = Modifier.fillMaxWidth()) {
-                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        analysis.progressionMatches.take(5).forEach { match ->
-                            Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                    Text(match.pattern.name, color = TextPrimary, style = MaterialTheme.typography.titleMedium)
-                                    Text("${(match.score * 100).roundToInt()}%", color = Lime, style = MaterialTheme.typography.labelSmall)
-                                }
-                                Text("${match.pattern.genre} · ${match.pattern.numerals.take(match.length).joinToString("  ")}", color = TextSecondary, style = MaterialTheme.typography.bodySmall)
-                                Text("from ${formatTime(analysis.chords.getOrNull(match.startIndex)?.startSeconds ?: 0.0)} · soft harmonic match", color = TextMuted, style = MaterialTheme.typography.bodySmall)
-                            }
-                        }
-                    }
-                }
-            }
-
-            Text("CHORD TIMELINE", color = TextMuted, style = MaterialTheme.typography.labelLarge)
-            Card(colors = CardDefaults.cardColors(containerColor = Surface), shape = RoundedCornerShape(18.dp), modifier = Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    if (analysis.chords.isEmpty()) {
-                        Text("No stable chords detected.", color = TextSecondary)
-                    } else {
-                        analysis.chords.take(24).forEachIndexed { index, chord ->
-                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Text(chord.symbol, color = if (index == 0) Lime else TextPrimary, style = MaterialTheme.typography.titleMedium)
-                                Text(formatTime(chord.startSeconds), color = TextMuted, style = MaterialTheme.typography.bodySmall)
-                                Text("${(chord.confidence * 100).roundToInt()}%", color = TextSecondary, style = MaterialTheme.typography.bodySmall)
-                            }
-                        }
-                        if (analysis.chords.size > 24) Text("+ ${analysis.chords.size - 24} more changes", color = TextMuted, style = MaterialTheme.typography.bodySmall)
-                    }
-                }
-            }
-        }
-
-        if (analysis.progressionMatches.isNotEmpty()) {
-            Text("DETECTED PROGRESSIONS", color = TextMuted, style = MaterialTheme.typography.labelLarge)
-            Card(colors = CardDefaults.cardColors(containerColor = Surface), shape = RoundedCornerShape(18.dp), modifier = Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    analysis.progressionMatches.forEach { match ->
-                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Text(match.pattern.name, color = TextPrimary, style = MaterialTheme.typography.titleMedium)
-                                Text("${(match.score * 100).roundToInt()}%", color = Lime, style = MaterialTheme.typography.labelMedium)
-                            }
-                            Text("${match.pattern.genre} · ${match.pattern.numerals.take(match.length).joinToString("  ->  ")}", color = TextSecondary, style = MaterialTheme.typography.bodySmall)
-                            Text("Starts at ${formatTime(analysis.chords.getOrNull(match.startIndex)?.startSeconds ?: 0.0)} · ${match.length} chords", color = TextMuted, style = MaterialTheme.typography.bodySmall)
-                        }
-                    }
-                    Text("Pattern matching is probabilistic and based on detected chords + key.", color = TextMuted, style = MaterialTheme.typography.bodySmall)
-                }
-            }
-        }
-        Text("ANALYSIS ROADMAP", color = TextMuted, style = MaterialTheme.typography.labelLarge)
+            Text("ANALYSIS ROADMAP", color = TextMuted, style = MaterialTheme.typography.labelLarge)
         AnalyzerStep("01", "KEY & SCALE", "Detect the tonal center and likely scale.")
         AnalyzerStep("02", "TEMPO", "Estimate BPM and beat grid.")
         AnalyzerStep("03", "CHORDS", "Track chord changes across the song.")
