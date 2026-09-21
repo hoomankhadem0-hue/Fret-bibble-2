@@ -7,7 +7,7 @@ object AudioSettings {
     private const val KEY = "sensitivity"
 
     // Middle/default setting: users can tune this after installation.
-    private const val DEFAULT_SENSITIVITY = 0.0015f
+    private const val DEFAULT_SENSITIVITY = 0.003f
 
     @Volatile
     var sensitivity: Float = DEFAULT_SENSITIVITY
