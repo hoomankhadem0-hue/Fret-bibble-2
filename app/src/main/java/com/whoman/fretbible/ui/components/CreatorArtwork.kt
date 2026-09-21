@@ -9,7 +9,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 
-private const val CREATOR_SKETCH_B64 = "$b64"
+private const val CREATOR_SKETCH_B64 =
+    CREATOR_CHUNK_0 + CREATOR_CHUNK_1 + CREATOR_CHUNK_2 + CREATOR_CHUNK_3 +
+    CREATOR_CHUNK_4 + CREATOR_CHUNK_5 + CREATOR_CHUNK_6 + CREATOR_CHUNK_7 +
+    CREATOR_CHUNK_8 + CREATOR_CHUNK_9
 
 @Composable
 fun CreatorSketchImage(modifier: Modifier = Modifier) {
