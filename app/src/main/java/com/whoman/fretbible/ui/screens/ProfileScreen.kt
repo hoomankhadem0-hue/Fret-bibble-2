@@ -9,7 +9,7 @@ import com.whoman.fretbible.audio.AudioSettings
 import com.whoman.fretbible.ui.theme.*
 
 @Composable
-fun ProfileScreen(onFretboard: () -> Unit) {
+fun ProfileScreen() {
     var sensitivity by remember { mutableFloatStateOf(AudioSettings.sensitivity) }
 
     Column(
@@ -56,21 +56,7 @@ fun ProfileScreen(onFretboard: () -> Unit) {
         )
 
         HorizontalDivider(color = Border)
-        Text("FRETBOARD", color = TextMuted, style = MaterialTheme.typography.labelLarge)
-        Text(
-            "Complete standard-tuning map: 6 strings × frets 0–24.",
-            color = TextSecondary,
-            style = MaterialTheme.typography.bodySmall
-        )
-        OutlinedButton(
-            onClick = onFretboard,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("EXPLORE ALL FRETS & NOTES")
-        }
-
-        HorizontalDivider(color = Border)
-        Text("PRACTICE", color = TextMuted, style = MaterialTheme.typography.labelLarge)
+        Text("PRACTICE", color = TextMuted, style = MaterialTheme.typography.labelLarge), color = TextMuted, style = MaterialTheme.typography.labelLarge)
         SettingsRow("Pitch matching", "Note + octave")
         SettingsRow("Tolerance", "Cents do not block a correct note")
         SettingsRow("Tuning", "Standard E A D G B E")
