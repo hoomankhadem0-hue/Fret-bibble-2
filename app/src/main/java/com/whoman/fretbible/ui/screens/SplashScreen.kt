@@ -8,7 +8,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -20,21 +21,27 @@ import kotlinx.coroutines.delay
 fun SplashScreen(onFinished: () -> Unit) {
     var entered by remember { mutableStateOf(false) }
     val transition = rememberInfiniteTransition(label = "splash")
+
     val pulse by transition.animateFloat(
-        initialValue = 0.88f,
+        initialValue = .88f,
         targetValue = 1.12f,
-        animationSpec = infiniteRepeatable(tween(1200, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+        animationSpec = infiniteRepeatable(
+            tween(1200, easing = FastOutSlowInEasing),
+            RepeatMode.Reverse
+        ),
         label = "pulse"
     )
+
     val scale by animateFloatAsState(
         targetValue = if (entered) 1f else .78f,
         animationSpec = spring(dampingRatio = .72f, stiffness = 220f),
-        label = "scale"
+        label = "logoScale"
     )
-    val alpha by animateFloatAsState(
+
+    val alphaValue by animateFloatAsState(
         targetValue = if (entered) 1f else 0f,
         animationSpec = tween(600, easing = FastOutSlowInEasing),
-        label = "alpha"
+        label = "logoAlpha"
     )
 
     LaunchedEffect(Unit) {
@@ -48,26 +55,18 @@ fun SplashScreen(onFinished: () -> Unit) {
         AnimatedBackground()
 
         Box(
-            Modifier.align(Alignment.Center).size(210.dp),
+            Modifier.align(Alignment.Center).size(220.dp),
             contentAlignment = Alignment.Center
         ) {
             Box(
-                Modifier.size((150 * pulse).dp)
-                    .graphicsLayer { alpha = .10f }
-                    .background(Lime, CircleShape)
+                Modifier.size(155.dp).scale(pulse).alpha(.10f).background(Lime, CircleShape)
             )
             Box(
-                Modifier.size(105.dp)
-                    .graphicsLayer { alpha = .08f; scaleX = pulse; scaleY = pulse }
-                    .background(Lime, CircleShape)
+                Modifier.size(110.dp).scale(pulse).alpha(.08f).background(Lime, CircleShape)
             )
 
             Column(
-                Modifier.graphicsLayer {
-                    this.alpha = alpha
-                    scaleX = scale
-                    scaleY = scale
-                },
+                Modifier.scale(scale).alpha(alphaValue),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
@@ -82,8 +81,8 @@ fun SplashScreen(onFinished: () -> Unit) {
                 Spacer(Modifier.height(18.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
                     repeat(3) { i ->
-                        val dot by transition.animateFloat(
-                            initialValue = .35f,
+                        val dotAlpha by transition.animateFloat(
+                            initialValue = .25f,
                             targetValue = 1f,
                             animationSpec = infiniteRepeatable(
                                 tween(700, delayMillis = i * 160),
@@ -92,9 +91,7 @@ fun SplashScreen(onFinished: () -> Unit) {
                             label = "dot$i"
                         )
                         Box(
-                            Modifier.size(5.dp)
-                                .graphicsLayer { alpha = dot }
-                                .background(Lime, CircleShape)
+                            Modifier.size(5.dp).alpha(dotAlpha).background(Lime, CircleShape)
                         )
                     }
                 }
