@@ -16,15 +16,17 @@ data class ChordEstimate(
     val confidence: Double
 )
 
-/**
- * Lightweight, dependency-free music analysis primitives.
- *
- * The BPM estimator works on an RMS/onset-like energy envelope.
- * Key/chord estimation uses chroma templates once chroma frames are supplied.
- * It intentionally exposes confidence rather than pretending uncertain
- * full-mix transcription is exact.
- */
 object MusicAnalyzer {
+    private val noteNames = arrayOf("C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B")
+
+    private val chordTemplates = listOf(
+        "maj" to intArrayOf(0, 4, 7),
+        "min" to intArrayOf(0, 3, 7),
+        "dim" to intArrayOf(0, 3, 6),
+        "sus2" to intArrayOf(0, 2, 7),
+        "sus4" to intArrayOf(0, 5, 7)
+    )
+
     fun estimateBpm(envelope: FloatArray, sampleRate: Int, hopSize: Int): Pair<Double, Double> {
         if (envelope.size < 8) return 0.0 to 0.0
         val diff = FloatArray(envelope.size) { i -> if (i == 0) 0f else max(0f, envelope[i] - envelope[i - 1]) }
@@ -36,7 +38,11 @@ object MusicAnalyzer {
             var score = 0.0
             var count = 0
             var i = lag
-            while (i < diff.size) { score += diff[i].toDouble() * diff[i - lag]; count++; i++ }
+            while (i < diff.size) {
+                score += diff[i].toDouble() * diff[i - lag]
+                count++
+                i++
+            }
             if (count > 0) {
                 val normalized = score / count
                 if (normalized > bestScore) {
@@ -46,8 +52,8 @@ object MusicAnalyzer {
             }
         }
         var bpm = bestBpm
-        while (bpm < 80) bpm *= 2.0
-        while (bpm > 160) bpm /= 2.0
+        while (bpm in 0.1..79.999) bpm *= 2.0
+        while (bpm > 160.0) bpm /= 2.0
         return bpm to if (bestScore.isFinite()) (bestScore / (bestScore + 1.0)).coerceIn(0.0, 1.0) else 0.0
     }
 
@@ -55,7 +61,6 @@ object MusicAnalyzer {
         if (chroma.size != 12) return "Unknown" to 0.0
         val major = doubleArrayOf(6.35,2.23,3.48,2.33,4.38,4.09,2.52,5.19,2.39,3.66,2.29,2.88)
         val minor = doubleArrayOf(6.33,2.68,3.52,5.38,2.60,3.53,2.54,4.75,3.98,2.69,3.34,3.17)
-        val names = arrayOf("C","C#","D","Eb","E","F","F#","G","Ab","A","Bb","B")
         var best = Double.NEGATIVE_INFINITY
         var second = Double.NEGATIVE_INFINITY
         var bestName = "Unknown"
@@ -63,12 +68,91 @@ object MusicAnalyzer {
             val profile = if (mode == 0) major else minor
             var dot = 0.0
             var norm = 0.0
-            for (i in 0..11) { dot += chroma[i] * profile[(i-root+12)%12]; norm += chroma[i]*chroma[i] }
-            val score = if (norm > 1e-12) dot / sqrt(norm * profile.sumOf { it*it }) else 0.0
-            if (score > best) { second = best; best = score; bestName = names[root] + if (mode == 0) " Major" else " Minor" }
-            else if (score > second) second = score
+            for (i in 0..11) {
+                dot += chroma[i] * profile[(i - root + 12) % 12]
+                norm += chroma[i] * chroma[i]
+            }
+            val score = if (norm > 1e-12) dot / sqrt(norm * profile.sumOf { it * it }) else 0.0
+            if (score > best) {
+                second = best
+                best = score
+                bestName = noteNames[root] + if (mode == 0) " Major" else " Minor"
+            } else if (score > second) second = score
         }
-        val confidence = ((best-second) / (1.0-(-1.0))).coerceIn(0.0,1.0)
+        val confidence = ((best - second) * 4.0).coerceIn(0.0, 1.0)
         return bestName to confidence
+    }
+
+    fun estimateChords(
+        chromaFrames: Array<DoubleArray>,
+        sampleRate: Int,
+        hopSize: Int,
+        minChangeSeconds: Double = 0.75
+    ): List<ChordEstimate> {
+        if (chromaFrames.isEmpty()) return emptyList()
+        val raw = ArrayList<ChordEstimate>()
+        var lastSymbol: String? = null
+        var lastStart = 0.0
+        var lastConfidence = 0.0
+
+        for (index in chromaFrames.indices) {
+            val frame = chromaFrames[index]
+            val (symbol, confidence) = bestChord(frame)
+            val time = index * hopSize.toDouble() / sampleRate
+            if (symbol != lastSymbol && (lastSymbol == null || time - lastStart >= minChangeSeconds)) {
+                if (lastSymbol != null) raw += ChordEstimate(lastSymbol!!, lastStart, lastConfidence)
+                lastSymbol = symbol
+                lastStart = time
+                lastConfidence = confidence
+            } else if (symbol == lastSymbol) {
+                lastConfidence = (lastConfidence * 0.7 + confidence * 0.3)
+            }
+        }
+        if (lastSymbol != null) raw += ChordEstimate(lastSymbol!!, lastStart, lastConfidence)
+        return mergeShortChanges(raw, minChangeSeconds)
+    }
+
+    private fun bestChord(chroma: DoubleArray): Pair<String, Double> {
+        if (chroma.size != 12) return "—" to 0.0
+        val energy = sqrt(chroma.sumOf { it * it })
+        if (energy < 1e-6) return "—" to 0.0
+        var best = Double.NEGATIVE_INFINITY
+        var second = Double.NEGATIVE_INFINITY
+        var bestSymbol = "—"
+        for (root in 0..11) {
+            for ((suffix, intervals) in chordTemplates) {
+                var score = 0.0
+                for (i in intervals) score += chroma[(root + i) % 12]
+                score /= intervals.size
+                val penalty = (chroma.sum() - intervals.sumOf { chroma[(root + it) % 12] }) * 0.08
+                score -= penalty
+                if (score > best) {
+                    second = best
+                    best = score
+                    bestSymbol = noteNames[root] + when (suffix) {
+                        "maj" -> ""
+                        "min" -> "m"
+                        else -> suffix
+                    }
+                } else if (score > second) second = score
+            }
+        }
+        return bestSymbol to ((best - second) * 3.0).coerceIn(0.0, 1.0)
+    }
+
+    private fun mergeShortChanges(input: List<ChordEstimate>, minDuration: Double): List<ChordEstimate> {
+        if (input.size < 2) return input
+        val result = input.toMutableList()
+        var i = 0
+        while (i < result.lastIndex) {
+            val duration = result[i + 1].startSeconds - result[i].startSeconds
+            if (duration < minDuration) {
+                result.removeAt(i)
+                if (i > 0) i--
+            } else {
+                i++
+            }
+        }
+        return result
     }
 }
