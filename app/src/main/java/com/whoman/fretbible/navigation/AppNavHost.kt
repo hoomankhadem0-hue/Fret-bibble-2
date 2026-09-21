@@ -11,12 +11,12 @@ import androidx.compose.foundation.layout.padding
 import com.whoman.fretbible.ui.screens.*
 import com.whoman.fretbible.ui.theme.*
 
-private enum class Route { Home, Practice, Roadmap, Progress, Profile, Fretboard }
+private enum class Route { Home, Practice, Roadmap, Progress, Profile }
 
 @Composable
 fun AppNavHost() {
     var route by remember { mutableStateOf<Route>(Route.Home) }
-    val showBottomBar = route != Route.Fretboard
+    val showBottomBar = true
 
     Scaffold(
         containerColor = Background,
