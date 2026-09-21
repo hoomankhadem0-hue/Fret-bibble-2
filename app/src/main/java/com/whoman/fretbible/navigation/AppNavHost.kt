@@ -21,7 +21,7 @@ import com.whoman.fretbible.ui.theme.*
 private enum class Route { Home, Practice, Roadmap, Progress, Profile, Analyzer, Dictionary }
 
 @Composable
-fun AppNavHost() {
+fun AppNavHost(userName: String, onUserNameChanged: (String) -> Unit) {
     var route by remember { mutableStateOf<Route>(Route.Home) }
 
     val items = listOf(
@@ -67,14 +67,15 @@ fun AppNavHost() {
         ) { current ->
             when (current) {
                 Route.Home -> HomeScreen(
+                    userName = userName,
                     onStartPractice = { route = Route.Practice },
                     onOpenDictionary = { route = Route.Dictionary },
                     onOpenAnalyzer = { route = Route.Analyzer }
                 )
-                Route.Practice -> PracticeScreen()
+                Route.Practice -> PracticeScreen(userName = userName)
                 Route.Roadmap -> RoadmapScreen()
                 Route.Progress -> ProgressScreen()
-                Route.Profile -> ProfileScreen()
+                Route.Profile -> ProfileScreen(userName = userName, onUserNameChanged = onUserNameChanged)
                 Route.Analyzer -> AnalyzerScreen()
                 Route.Dictionary -> FretboardExplorerScreen { route = Route.Home }
             }
