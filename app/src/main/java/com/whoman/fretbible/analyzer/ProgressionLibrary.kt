@@ -134,7 +134,7 @@ object ProgressionLibrary {
     /** Soft transition prior. Returns 0..1 and deliberately stays modest. */
     fun transitionPrior(previous: String?, candidate: String): Double {
         if (previous == null) return 0.0
-        val next = transitionWeights[previous]?.get(candidate] ?: return 0.0
+        val next = transitionWeights[previous]?.get(candidate) ?: return 0.0
         val total = transitionWeights[previous]?.values?.sum() ?: 0.0
         return if (total > 0) (next / total).coerceIn(0.0, 1.0) else 0.0
     }
