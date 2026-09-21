@@ -46,7 +46,7 @@ fun AnalyzerScreen() {
                         val max = aggregate.maxOrNull() ?: 0.0
                         if (max > 0) for (pc in 0 until 12) aggregate[pc] /= max
                         val key = MusicAnalyzer.estimateKey(aggregate)
-                        val chords = MusicAnalyzer.estimateChords(frames, decoded.sampleRate, 2048)
+                        val chords = MusicAnalyzer.estimateChords(frames, decoded.sampleRate, 2048, key = key.first)
                         AnalyzerResult(bpm.first, bpm.second, key.first, key.second, chords)
                     }
                     result = analyzed
@@ -77,6 +77,7 @@ fun AnalyzerScreen() {
                 }
                 if (error != null) Text(error!!, color = Error, style = MaterialTheme.typography.bodySmall)
                 Text("Local processing · first 3 minutes · experimental", color = TextMuted, style = MaterialTheme.typography.bodySmall)
+                Text("Harmonic knowledge base · ${ProgressionLibrary.patterns.size} progression patterns", color = Lime.copy(alpha = 0.75f), style = MaterialTheme.typography.bodySmall)
             }
         }
 
