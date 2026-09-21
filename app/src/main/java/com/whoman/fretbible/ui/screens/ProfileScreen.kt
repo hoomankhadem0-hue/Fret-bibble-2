@@ -66,10 +66,11 @@ fun ProfileScreen(userName: String, onUserNameChanged: (String) -> Unit) {
         label = "ringScale"
     )
     val artScale by pulse.animateFloat(
-        0.985f, 1.015f,
-        infiniteRepeatable(tween(2200, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+        0.992f, 1.008f,
+        infiniteRepeatable(tween(2400, easing = FastOutSlowInEasing), RepeatMode.Reverse),
         label = "artScale"
     )
+    val creatorGlow by pulse.animateFloat(.12f, .30f, infiniteRepeatable(tween(1900, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "creatorGlow")
 
     Box(Modifier.fillMaxSize()) {
         Column(
@@ -189,7 +190,8 @@ fun ProfileScreen(userName: String, onUserNameChanged: (String) -> Unit) {
                 Surface(
                     modifier = Modifier.fillMaxWidth().scale(artScale),
                     shape = RoundedCornerShape(18.dp),
-                    color = Color(0xFFF4F1E9)
+                    color = Color(0xFFF4F1E9),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Lime.copy(alpha = creatorGlow))
                 ) {
                     Image(
                         painter = painterResource(R.drawable.creator_sketch),
