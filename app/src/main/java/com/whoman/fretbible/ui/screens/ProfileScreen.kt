@@ -18,7 +18,7 @@ import com.whoman.fretbible.ui.components.*
 import com.whoman.fretbible.ui.theme.*
 
 @Composable
-fun ProfileScreen(onAnalyzer: () -> Unit) {
+fun ProfileScreen() {
     val context = LocalContext.current
     val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
     var threshold by remember { mutableFloatStateOf(0.00035f) }
@@ -55,43 +55,32 @@ fun ProfileScreen(onAnalyzer: () -> Unit) {
     ) {
         ScreenHeader(
             kicker = "PROFILE",
-            title = "Hooman",
-            subtitle = "@Its__whoman · Fret Bible creator"
+            title = "Your progress.",
+            subtitle = "Achievements, settings and a way to reach the creator."
         )
 
+        SectionLabel("ACHIEVEMENTS")
         SurfaceCard(modifier = Modifier.fillMaxWidth(), elevated = true) {
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Surface(
-                    modifier = Modifier.size(62.dp),
-                    shape = CircleShape,
-                    color = LimeSoft,
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Lime.copy(alpha = .35f))
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Text("H", color = Lime, style = MaterialTheme.typography.headlineSmall)
-                    }
-                }
-                Spacer(Modifier.width(14.dp))
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                    Text("HOOMAN KHADEM", color = TextPrimary, style = MaterialTheme.typography.titleLarge)
-                    Text("Building Fret Bible", color = TextSecondary, style = MaterialTheme.typography.bodySmall)
-                    Text("hooman.khadem0@gmail.com", color = Lime, style = MaterialTheme.typography.labelSmall)
+                    Text("BUILD YOUR STREAK", color = Lime, style = MaterialTheme.typography.labelMedium)
+                    Text("${stats.sessions} sessions · ${stats.correct} correct notes", style = MaterialTheme.typography.titleMedium)
+                    Text("Keep practicing to unlock more milestones.", color = TextSecondary, style = MaterialTheme.typography.bodySmall)
+                }
+                Surface(shape = CircleShape, color = LimeSoft) {
+                    Text("${stats.accuracy}%", color = Lime, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(12.dp))
                 }
             }
         }
 
-        SectionLabel("ACHIEVEMENTS")
         SurfaceCard(modifier = Modifier.fillMaxWidth()) {
             achievements.forEachIndexed { index, item ->
                 val unlocked = item.third
                 Row(
-                    Modifier.fillMaxWidth().padding(vertical = if (index == 0) 0.dp else 6.dp),
+                    Modifier.fillMaxWidth().padding(vertical = if (index == 0) 0.dp else 7.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Surface(
-                        shape = RoundedCornerShape(10.dp),
-                        color = if (unlocked) LimeSoft else Background
-                    ) {
+                    Surface(shape = RoundedCornerShape(10.dp), color = if (unlocked) LimeSoft else Background) {
                         Text(
                             if (unlocked) "✓" else "·",
                             color = if (unlocked) Lime else TextMuted,
@@ -104,17 +93,21 @@ fun ProfileScreen(onAnalyzer: () -> Unit) {
                         Text(item.first, color = if (unlocked) TextPrimary else TextSecondary, style = MaterialTheme.typography.titleSmall)
                         Text(item.second, color = TextMuted, style = MaterialTheme.typography.bodySmall)
                     }
-                    Text(if (unlocked) "UNLOCKED" else "LOCKED", color = if (unlocked) Lime else TextMuted, style = MaterialTheme.typography.labelSmall)
+                    Text(
+                        if (unlocked) "UNLOCKED" else "LOCKED",
+                        color = if (unlocked) Lime else TextMuted,
+                        style = MaterialTheme.typography.labelSmall
+                    )
                 }
             }
         }
 
         SectionLabel("SETTINGS")
         SurfaceCard(modifier = Modifier.fillMaxWidth(), elevated = true) {
-            Text("AUDIO", color = Lime, style = MaterialTheme.typography.labelMedium)
+            Text("MICROPHONE", color = Lime, style = MaterialTheme.typography.labelMedium)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                    Text("Microphone sensitivity", style = MaterialTheme.typography.titleMedium)
+                    Text("Sensitivity", style = MaterialTheme.typography.titleMedium)
                     Text("Raise it for quieter playing; lower it to reject more background noise.", color = TextSecondary, style = MaterialTheme.typography.bodySmall)
                 }
                 Text(sensitivityLabel, color = Lime, style = MaterialTheme.typography.labelMedium)
@@ -142,38 +135,43 @@ fun ProfileScreen(onAnalyzer: () -> Unit) {
         }
 
         SurfaceCard(modifier = Modifier.fillMaxWidth()) {
-            Text("PRACTICE", color = Lime, style = MaterialTheme.typography.labelMedium)
-            SettingRow("Pitch matching", "Note + octave · fixed for consistent scoring")
-            SettingRow("Correctness", "Cents never block a correct note · fixed")
+            Text("PRACTICE RULES", color = Lime, style = MaterialTheme.typography.labelMedium)
+            SettingRow("Pitch matching", "Note + octave · fixed")
+            SettingRow("Correctness", "Cents do not block a correct note · fixed")
             SettingRow("Tuning", "Standard E · A · D · G · B · E · fixed")
+            Text("Questions, mode and fret range are set at the beginning of each Practice session.", color = TextMuted, style = MaterialTheme.typography.bodySmall)
         }
 
-        SurfaceCard(modifier = Modifier.fillMaxWidth()) {
-            Text("TOOLS", color = Lime, style = MaterialTheme.typography.labelMedium)
-            Text("Song Analyzer", style = MaterialTheme.typography.titleMedium)
-            Text("Explore key, tempo and harmonic structure.", color = TextSecondary, style = MaterialTheme.typography.bodySmall)
-            Spacer(Modifier.height(2.dp))
-            PrimaryAction("OPEN ANALYZER", onAnalyzer, Modifier.fillMaxWidth())
-        }
-
-        SectionLabel("CONTACT THE DESIGNER")
-        SurfaceCard(modifier = Modifier.fillMaxWidth()) {
-            ContactRow(
-                title = "Email",
-                value = "hooman.khadem0@gmail.com",
-                onClick = { uriHandler.openUri("mailto:hooman.khadem0@gmail.com") }
-            )
+        SectionLabel("ABOUT THE CREATOR")
+        SurfaceCard(modifier = Modifier.fillMaxWidth(), elevated = true) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Surface(
+                    modifier = Modifier.size(52.dp),
+                    shape = CircleShape,
+                    color = LimeSoft,
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Lime.copy(alpha = .28f))
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text("H", color = Lime, style = MaterialTheme.typography.titleLarge)
+                    }
+                }
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text("Made by Hooman", color = TextPrimary, style = MaterialTheme.typography.titleMedium)
+                    Text("Music-tech tools for learning the neck.", color = TextSecondary, style = MaterialTheme.typography.bodySmall)
+                }
+            }
+            Spacer(Modifier.height(4.dp))
             ContactRow(
                 title = "Instagram",
                 value = "@Its__whoman",
                 onClick = { uriHandler.openUri("https://instagram.com/Its__whoman") }
             )
-        }
-
-        SurfaceCard(modifier = Modifier.fillMaxWidth()) {
-            Text("FRET BIBLE", color = Lime, style = MaterialTheme.typography.labelMedium)
-            Text("made by Hooman", color = TextPrimary, style = MaterialTheme.typography.titleMedium)
-            Text("Music-tech tools for learning the neck by ear and by hand.", color = TextSecondary, style = MaterialTheme.typography.bodySmall)
+            ContactRow(
+                title = "Email",
+                value = "hooman.khadem0@gmail.com",
+                onClick = { uriHandler.openUri("mailto:hooman.khadem0@gmail.com") }
+            )
         }
 
         Spacer(Modifier.height(8.dp))
