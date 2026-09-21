@@ -31,8 +31,12 @@ object MusicAnalyzer {
         "maj" to intArrayOf(0, 4, 7),
         "min" to intArrayOf(0, 3, 7),
         "dim" to intArrayOf(0, 3, 6),
+        "7" to intArrayOf(0, 4, 7, 10),
+        "maj7" to intArrayOf(0, 4, 7, 11),
+        "m7" to intArrayOf(0, 3, 7, 10),
         "sus2" to intArrayOf(0, 2, 7),
-        "sus4" to intArrayOf(0, 5, 7)
+        "sus4" to intArrayOf(0, 5, 7),
+        "5" to intArrayOf(0, 7)
     )
 
     fun estimateBpm(envelope: FloatArray, sampleRate: Int, hopSize: Int): Pair<Double, Double> {
