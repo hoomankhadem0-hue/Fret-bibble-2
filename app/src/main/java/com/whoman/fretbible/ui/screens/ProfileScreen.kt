@@ -188,7 +188,7 @@ fun ProfileScreen(userName: String, onUserNameChanged: (String) -> Unit) {
             SectionLabel("ABOUT THE CREATOR")
             SurfaceCard(modifier = Modifier.fillMaxWidth(), elevated = true) {
                 Surface(
-                    modifier = Modifier.fillMaxWidth().scale(artScale),
+                    modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(18.dp),
                     color = Color(0xFFF4F1E9),
                     border = androidx.compose.foundation.BorderStroke(1.dp, Lime.copy(alpha = creatorGlow))
