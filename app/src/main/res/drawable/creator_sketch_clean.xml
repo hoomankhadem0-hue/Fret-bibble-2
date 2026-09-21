@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="512dp" android:height="512dp" android:viewportWidth="1259" android:viewportHeight="1110">
+<path android:fillColor="#FFFFFFFF" android:pathData="M0,0 L1259,0 L1259,1110 L0,1110 Z"/>
+<path android:fillColor="#FF111111" android:pathData="M 857,987 L 861,995 L 851,1000 L 842,1001 L 836,996 L 844,988 L 857,987 Z"/>
+<path android:fillColor="#FF111111" android:pathData="M 725,1016 L 714,1019 L 713,1025 L 704,1025 L 698,1021 L 695,1017 L 701,1011 L 704,1005 L 713,1005 L 720,1010 L 725,1016 Z"/>
+<!-- TRACE_BUILDER_PLACEHOLDER -->
