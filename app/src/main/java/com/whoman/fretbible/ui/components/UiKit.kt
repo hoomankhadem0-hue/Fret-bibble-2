@@ -77,7 +77,7 @@ fun PrimaryAction(text: String, onClick: () -> Unit, modifier: Modifier = Modifi
             containerColor = Lime,
             contentColor = Background,
             disabledContainerColor = Border,
-            disabledContentColor = TextMuted
+            disabledContentColor = TextSecondary
         )
     ) { Text(text, style = MaterialTheme.typography.labelLarge) }
 }
