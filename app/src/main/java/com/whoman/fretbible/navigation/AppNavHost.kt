@@ -55,7 +55,7 @@ fun AppNavHost() {
                 Route.Practice -> PracticeScreen()
                 Route.Roadmap -> RoadmapScreen()
                 Route.Progress -> ProgressScreen()
-                Route.Profile -> ProfileScreen { route = Route.Fretboard }
+                Route.Profile -> ProfileScreen()
                 Route.Fretboard -> FretboardExplorerScreen { route = Route.Profile }
             }
         }
