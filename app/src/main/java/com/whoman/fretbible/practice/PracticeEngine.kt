@@ -1,6 +1,7 @@
 package com.whoman.fretbible.practice
 
 import com.whoman.fretbible.core.model.*
+import kotlin.random.Random
 
 enum class AttemptState { LISTENING, CORRECT, TOO_HIGH, TOO_LOW, WRONG_NOTE }
 
@@ -12,16 +13,9 @@ class PracticeEngine {
     private val stats = mutableMapOf<Pair<Int, Int>, FretStats>()
 
     fun evaluate(target: TargetNote, detected: DetectedNote): AttemptState {
-        // The exercise verifies the musical note, not tuning precision.
-        // B3 at 244 Hz, 247 Hz, etc. is still B3 for fretboard training.
         if (detected.confidence < 0.18) return AttemptState.LISTENING
+        if (detected.midi == target.midi) return AttemptState.CORRECT
 
-        if (detected.midi == target.midi) {
-            return AttemptState.CORRECT
-        }
-
-        // Keep useful tuning feedback when the detector is exactly one
-        // semitone away from the requested note.
         return when {
             detected.midi == target.midi + 1 -> AttemptState.TOO_HIGH
             detected.midi == target.midi - 1 -> AttemptState.TOO_LOW
@@ -39,11 +33,16 @@ class PracticeEngine {
     fun score(target: TargetNote): FretStats =
         stats[target.stringNumber to target.fret] ?: FretStats()
 
-    fun nextTargets(count: Int = 12): List<TargetNote> {
-        val pool = targets()
-        return pool.sortedBy { score(it).accuracy }.take((count / 2).coerceAtLeast(1)) +
-            pool.shuffled().take((count + 1) / 2)
+    /** A new session samples the complete 150-position standard-tuning neck. */
+    fun newSession(count: Int = 24): List<TargetNote> {
+        return FretboardData.all(24)
+            .shuffled(Random(System.nanoTime()))
+            .take(count.coerceAtMost(150))
+            .map { it.toTarget() }
     }
+
+    private fun FretPosition.toTarget() =
+        TargetNote(note, octave, stringNumber, fret)
 
     fun targets() = listOf(
         TargetNote(NoteName.B, 3, 2, 0),
