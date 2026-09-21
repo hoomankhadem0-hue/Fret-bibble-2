@@ -140,7 +140,21 @@ fun PracticeScreen() {
                     Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Text("SESSION SETUP", color = Lime, style = MaterialTheme.typography.labelLarge)
                         SettingButton("QUESTIONS", config.count.toString()) { dialog = "count" }
-                        SettingButton("FRET RANGE", "0–" + config.maxFret) { dialog = "range" }
+                        Column(Modifier.fillMaxWidth()) {
+                            Text("FRET RANGE", color = TextMuted, style = MaterialTheme.typography.labelSmall)
+                            Text("0–" + config.maxFret + " frets", color = TextPrimary, style = MaterialTheme.typography.titleMedium)
+                            Spacer(Modifier.height(10.dp))
+                            FretRangeSlider(
+                                value = config.maxFret,
+                                onValueChange = { config = config.copy(maxFret = it) },
+                                onValueChangeFinished = { PracticePreferences.save(context, config) }
+                            )
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text("0", color = TextMuted, style = MaterialTheme.typography.labelSmall)
+                                Text("12", color = TextMuted, style = MaterialTheme.typography.labelSmall)
+                                Text("21", color = TextMuted, style = MaterialTheme.typography.labelSmall)
+                            }
+                        }
                         SettingButton("TRAINING MODE", config.mode.label) { dialog = "mode" }
                         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                             Column(Modifier.weight(1f)) { Text("SPEED TIMER", style = MaterialTheme.typography.titleSmall); Text("10 seconds per target", color = TextMuted, style = MaterialTheme.typography.bodySmall) }
@@ -213,8 +227,7 @@ fun PracticeScreen() {
     }
 
     if (dialog == "count") AlertDialog(onDismissRequest = { dialog = "" }, title = { Text("Questions") }, text = { Column { listOf(10, 20, 24, 30, 50).forEach { n -> TextButton(onClick = { config = config.copy(count = n); PracticePreferences.save(context, config); dialog = "" }) { Text(n.toString() + " questions") } } } }, confirmButton = {})
-    if (dialog == "range") AlertDialog(onDismissRequest = { dialog = "" }, title = { Text("Fret range") }, text = { Column { listOf(12, 17, 21).forEach { n -> TextButton(onClick = { config = config.copy(maxFret = n); PracticePreferences.save(context, config); dialog = "" }) { Text("0–" + n + " frets") } } } }, confirmButton = {})
-    if (dialog == "mode") AlertDialog(onDismissRequest = { dialog = "" }, title = { Text("Training mode") }, text = { Column { PracticeMode.entries.forEach { m -> TextButton(onClick = { config = config.copy(mode = m); PracticePreferences.save(context, config); dialog = "" }) { Text(m.label) } } } }, confirmButton = {})
+        if (dialog == "mode") AlertDialog(onDismissRequest = { dialog = "" }, title = { Text("Training mode") }, text = { Column { PracticeMode.entries.forEach { m -> TextButton(onClick = { config = config.copy(mode = m); PracticePreferences.save(context, config); dialog = "" }) { Text(m.label) } } } }, confirmButton = {})
 }
 
 @Composable private fun SettingButton(label: String, value: String, onClick: () -> Unit) {
@@ -227,4 +240,17 @@ fun PracticeScreen() {
 }
 @Composable private fun MetricChip(label: String, value: String) {
     Surface(shape = RoundedCornerShape(12.dp), color = Surface) { Column(Modifier.padding(horizontal = 11.dp, vertical = 7.dp), horizontalAlignment = Alignment.End) { Text(label, color = TextMuted, style = MaterialTheme.typography.labelSmall); Text(value, color = Lime, style = MaterialTheme.typography.titleSmall) } }
+}
+
+
+@Composable
+private fun FretRangeSlider(value: Int, onValueChange: (Int) -> Unit, onValueChangeFinished: () -> Unit) {
+    Slider(
+        value = value.toFloat(),
+        onValueChange = { onValueChange(it.toInt().coerceIn(1, 21)) },
+        onValueChangeFinished = onValueChangeFinished,
+        valueRange = 1f..21f,
+        steps = 19,
+        modifier = Modifier.fillMaxWidth()
+    )
 }
