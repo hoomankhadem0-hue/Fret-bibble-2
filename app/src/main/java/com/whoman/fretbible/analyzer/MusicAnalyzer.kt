@@ -175,8 +175,8 @@ object MusicAnalyzer {
     fun matchProgressions(chords: List<ChordEstimate>, key: String, maxResults: Int = 5): List<ProgressionMatch> {
         if (chords.size < 2 || key == "Unknown") return emptyList()
 
-        val romanChords = chords.mapNotNull { chord ->
-            ProgressionLibrary.romanFor(chord.symbol, key)?.let { it to chord }
+        val romanChords = chords.mapIndexedNotNull { index, chord ->
+            ProgressionLibrary.romanFor(chord.symbol, key)?.let { index to (it to chord) }
         }
         if (romanChords.size < 2) return emptyList()
 
@@ -193,9 +193,9 @@ object MusicAnalyzer {
                     var exact = 0.0
                     var weighted = 0.0
                     for (i in 0 until len) {
-                        if (romanChords[startIndex + i].first == p[i]) {
+                        if (baseRoman(romanChords[startIndex + i].second.first) == baseRoman(p[i])) {
                             exact += 1.0
-                            weighted += if (romanChords[startIndex + i].second.confidence >= 0.65) 1.0 else 0.8
+                            weighted += if (romanChords[startIndex + i].second.second.confidence >= 0.65) 1.0 else 0.8
                         }
                     }
 
@@ -206,7 +206,7 @@ object MusicAnalyzer {
                         pattern.weight.coerceAtMost(1.5) / 1.5
 
                     if (score >= 0.66 && (exact >= len - 1 || len <= 2)) {
-                        matches += ProgressionMatch(pattern, startIndex, len, score.coerceIn(0.0, 1.0))
+                        matches += ProgressionMatch(pattern, romanChords[startIndex].first, len, score.coerceIn(0.0, 1.0))
                     }
                 }
             }
@@ -225,6 +225,10 @@ object MusicAnalyzer {
             }
             .take(maxResults)
     }
+
+    private fun baseRoman(value: String): String =
+        value.replace("♭", "b").replace("°", "").replace("ø", "")
+            .replace(Regex("(maj7|m7|7|6|sus2|sus4)$"), "")
 
     private fun mergeShortChanges(input: List<ChordEstimate>, minDuration: Double): List<ChordEstimate> {
         if (input.size < 2) return input
