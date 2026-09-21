@@ -49,7 +49,7 @@ fun PracticeScreen() {
     var sessionStarted by remember { mutableStateOf(false) }
     var sessionSaved by remember { mutableStateOf(false) }
     var sessionStartedAt by remember { mutableLongStateOf(0L) }
-    var showTargetPosition by remember { mutableStateOf(true) }
+    var hideTargetPosition by remember { mutableStateOf(false) }
     var dialog by remember { mutableStateOf("") }
 
     val current = targets.getOrNull(index)
@@ -126,11 +126,11 @@ fun PracticeScreen() {
     }
 
     Column(Modifier.fillMaxSize().background(Background)) {
-        Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 12.dp).blur(if (dialog.isNotEmpty()) 7.dp else 0.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text("PRACTICE", color = TextMuted, style = MaterialTheme.typography.labelLarge)
-                    Text(if (running) (index + 1).toString() + " / " + targets.size else "Session setup", style = MaterialTheme.typography.headlineSmall)
+                    Text("PRACTICE", color = Lime, style = MaterialTheme.typography.labelSmall)
+                    Text(if (running) (index + 1).toString() + " / " + targets.size else "Session setup", style = MaterialTheme.typography.titleLarge)
                 }
                 MetricChip("PTS", points.toString()); Spacer(Modifier.width(7.dp)); MetricChip("STREAK", streak.toString())
             }
@@ -167,33 +167,47 @@ fun PracticeScreen() {
             }
 
             if (current != null) {
-                Card(shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = ElevatedSurface), modifier = Modifier.fillMaxWidth()) {
-                    Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Card(shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = ElevatedSurface), modifier = Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(horizontal = 16.dp, vertical = 14.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                             Text("FIND THIS NOTE", color = TextMuted, style = MaterialTheme.typography.labelLarge)
                             if (running) Text(if (current.fret == 0) "OPEN" else "FRET " + current.fret, color = Lime, style = MaterialTheme.typography.labelSmall)
                         }
                         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
-                            Text(current.note.display + current.octave, color = Lime, style = MaterialTheme.typography.displayMedium, modifier = Modifier.weight(1f))
+                            Text(current.note.display + current.octave, color = Lime, style = MaterialTheme.typography.headlineLarge, modifier = Modifier.weight(1f))
                             Text("STRING " + current.stringNumber, color = TextSecondary, style = MaterialTheme.typography.titleSmall)
                         }
-                        Text("String " + current.stringNumber + " · Fret " + current.fret, color = TextPrimary, style = MaterialTheme.typography.bodyLarge)
+                        Text("String " + current.stringNumber + " · Fret " + current.fret, color = TextSecondary, style = MaterialTheme.typography.bodyMedium)
                     }
                 }
 
-                Surface(shape = RoundedCornerShape(22.dp), color = Surface, modifier = Modifier.fillMaxWidth()) {
-                    Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Surface(shape = RoundedCornerShape(20.dp), color = Surface, modifier = Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(horizontal = 14.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                             Column(Modifier.weight(1f)) {
-                                Text("TARGET POSITION", color = TextMuted, style = MaterialTheme.typography.labelSmall)
-                                Text(if (showTargetPosition) "String " + current.stringNumber + " · Fret " + current.fret else "Train from memory", color = TextSecondary, style = MaterialTheme.typography.bodySmall)
+                                Text("POSITION VISIBILITY", color = TextMuted, style = MaterialTheme.typography.labelSmall)
+                                Text(if (hideTargetPosition) "Hidden · train from memory" else "Visible · use as a reference", color = TextSecondary, style = MaterialTheme.typography.bodySmall)
                             }
-                            Switch(showTargetPosition, { showTargetPosition = it })
+                            Switch(
+                                checked = hideTargetPosition,
+                                onCheckedChange = { hideTargetPosition = it }
+                            )
                         }
-                        Box(Modifier.fillMaxWidth().height(190.dp).clip(RoundedCornerShape(16.dp)).background(Background)) {
-                            Fretboard(highlightedString = current.stringNumber, highlightedFret = current.fret, modifier = Modifier.fillMaxWidth().blur(if (showTargetPosition) 0.dp else 14.dp))
-                            if (!showTargetPosition) Surface(color = Background.copy(alpha = .84f), shape = RoundedCornerShape(12.dp), modifier = Modifier.align(Alignment.Center)) {
-                                Text("POSITION HIDDEN", color = TextPrimary, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(horizontal = 14.dp, vertical = 9.dp))
+                        Box(Modifier.fillMaxWidth().height(164.dp).clip(RoundedCornerShape(15.dp)).background(Background)) {
+                            Fretboard(
+                                highlightedString = if (hideTargetPosition) null else current.stringNumber,
+                                highlightedFret = if (hideTargetPosition) null else current.fret,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            if (hideTargetPosition) {
+                                Surface(
+                                    color = ElevatedSurface.copy(alpha = .92f),
+                                    shape = RoundedCornerShape(999.dp),
+                                    modifier = Modifier.align(Alignment.Center)
+                                ) {
+                                    Text("POSITION HIDDEN", color = TextPrimary, style = MaterialTheme.typography.labelSmall,
+                                        modifier = Modifier.padding(horizontal = 13.dp, vertical = 8.dp))
+                                }
                             }
                         }
                     }
@@ -217,10 +231,10 @@ fun PracticeScreen() {
         }
 
         Surface(color = Surface, tonalElevation = 6.dp) {
-            Column(Modifier.padding(horizontal = 18.dp, vertical = 12.dp)) {
+            Column(Modifier.padding(horizontal = 16.dp, vertical = 10.dp)) {
                 Button(onClick = {
                     if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) { if (!running) startNew() } else launcher.launch(Manifest.permission.RECORD_AUDIO)
-                }, enabled = !running, modifier = Modifier.fillMaxWidth().height(54.dp), shape = RoundedCornerShape(16.dp)) { Text(if (sessionStarted && !running) "NEW SESSION" else "START PRACTICE") }
+                }, enabled = !running, modifier = Modifier.fillMaxWidth().height(50.dp), shape = RoundedCornerShape(16.dp)) { Text(if (sessionStarted && !running) "NEW SESSION" else "START PRACTICE") }
                 if (sessionStarted && !running) Text(points.toString() + " points · " + accuracy + "% accuracy · " + correct + " correct", color = TextSecondary, style = MaterialTheme.typography.bodySmall, modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 7.dp))
             }
         }
