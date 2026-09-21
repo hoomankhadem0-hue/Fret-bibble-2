@@ -1,5 +1,6 @@
 package com.whoman.fretbible.navigation
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -14,29 +15,40 @@ private enum class Route { Home, Practice, Roadmap, Progress, Profile, Fretboard
 @Composable
 fun AppNavHost() {
     var route by remember { mutableStateOf<Route>(Route.Home) }
+    val showBottomBar = route != Route.Fretboard
+
     Scaffold(
         containerColor = Background,
         bottomBar = {
-            NavigationBar(containerColor = Surface) {
-                val items = listOf(
-                    Route.Home to Icons.Default.Home,
-                    Route.Practice to Icons.Default.PlayArrow,
-                    Route.Roadmap to Icons.Default.Map,
-                    Route.Progress to Icons.Default.BarChart,
-                    Route.Profile to Icons.Default.Person
-                )
-                items.forEach { (item, icon) ->
-                    NavigationBarItem(
-                        selected = route == item,
-                        onClick = { route = item },
-                        icon = { Icon(icon, contentDescription = null) },
-                        label = { Text(item.name.lowercase().replaceFirstChar { it.uppercase() }) }
+            if (showBottomBar) {
+                NavigationBar(
+                    containerColor = Surface,
+                    tonalElevation = 8.dp
+                ) {
+                    val items = listOf(
+                        Route.Home to Icons.Default.Home,
+                        Route.Practice to Icons.Default.PlayArrow,
+                        Route.Roadmap to Icons.Default.Map,
+                        Route.Progress to Icons.Default.BarChart,
+                        Route.Profile to Icons.Default.Person
                     )
+                    items.forEach { (item, icon) ->
+                        NavigationBarItem(
+                            selected = route == item,
+                            onClick = { route = item },
+                            icon = { Icon(icon, contentDescription = item.name) },
+                            label = { Text(item.name) }
+                        )
+                    }
                 }
             }
         }
     ) { padding ->
-        androidx.compose.animation.AnimatedContent(targetState = route, modifier = Modifier.padding(padding), label = "screen") { current ->
+        AnimatedContent(
+            targetState = route,
+            modifier = Modifier.padding(padding),
+            label = "screen"
+        ) { current ->
             when (current) {
                 Route.Home -> HomeScreen { route = Route.Practice }
                 Route.Practice -> PracticeScreen()
