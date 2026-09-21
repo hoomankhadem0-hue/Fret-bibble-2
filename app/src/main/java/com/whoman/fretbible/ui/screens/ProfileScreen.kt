@@ -6,7 +6,6 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -18,12 +17,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.unit.dp
-import com.whoman.fretbible.R
 import com.whoman.fretbible.audio.AudioSettings
 import com.whoman.fretbible.practice.PracticeStatsStore
 import com.whoman.fretbible.ui.components.*
@@ -64,11 +60,6 @@ fun ProfileScreen(userName: String, onUserNameChanged: (String) -> Unit) {
         0.96f, 1.04f,
         infiniteRepeatable(tween(1700, easing = FastOutSlowInEasing), RepeatMode.Reverse),
         label = "ringScale"
-    )
-    val artScale by pulse.animateFloat(
-        0.992f, 1.008f,
-        infiniteRepeatable(tween(2400, easing = FastOutSlowInEasing), RepeatMode.Reverse),
-        label = "artScale"
     )
     val creatorGlow by pulse.animateFloat(.12f, .30f, infiniteRepeatable(tween(1900, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "creatorGlow")
 
@@ -202,7 +193,7 @@ fun ProfileScreen(userName: String, onUserNameChanged: (String) -> Unit) {
                 }
                 Spacer(Modifier.height(4.dp))
                 Text("Hooman", color = TextPrimary, style = MaterialTheme.typography.titleLarge)
-                Text("Fret Bible creator · say hello or send feedback.", color = TextSecondary, style = MaterialTheme.typography.bodySmall)
+                Text("Creator · feedback & contact", color = TextSecondary, style = MaterialTheme.typography.bodySmall)
                 ContactRow(
                     title = "Instagram",
                     value = "@Its__whoman",
