@@ -159,16 +159,18 @@ object ProgressionLibrary {
     }
 
     fun romanFor(symbol: String, key: String): String? {
-        val rootName = symbol.takeWhile { it.isLetter() || it == '#' || it == 'b' }
+        val rootName = noteNames
+            .sortedByDescending { it.length }
+            .firstOrNull { symbol.startsWith(it) } ?: return null
         val root = noteNames.indexOf(rootName)
-        if (root < 0) return null
         val keyRoot = noteNames.indexOf(key.substringBefore(" "))
-        if (keyRoot < 0) return null
+        if (root < 0 || keyRoot < 0) return null
         val mode = key.substringAfter(" ", "")
         val scale = if (mode == "Minor") intArrayOf(0,2,3,5,7,8,10) else intArrayOf(0,2,4,5,7,9,11)
         val degree = scale.indexOf((root - keyRoot + 12) % 12)
         if (degree < 0) return null
         val roman = arrayOf("I","ii","iii","IV","V","vi","vii°")[degree]
-        return if (symbol.endsWith("m")) roman.lowercase() else roman
+        val minor = symbol.contains("m") && !symbol.contains("maj")
+        return if (minor) roman.lowercase() else roman
     }
 }
