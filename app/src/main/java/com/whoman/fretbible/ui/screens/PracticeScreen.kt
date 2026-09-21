@@ -244,7 +244,7 @@ fun PracticeScreen() {
                     SurfaceCard(modifier = Modifier.fillMaxWidth(), elevated = true) {
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                             Text("FIND THIS NOTE", color = TextMuted, style = MaterialTheme.typography.labelMedium)
-                            if (running) {
+                            if (running && !hideTargetPosition) {
                                 Text(if (current.fret == 0) "OPEN" else "FRET ${current.fret}", color = Lime, style = MaterialTheme.typography.labelSmall)
                             }
                         }
@@ -252,13 +252,19 @@ fun PracticeScreen() {
                             Crossfade(targetState = current.note.display + current.octave, label = "targetNote") { value ->
                                 Text(value, color = Lime, style = MaterialTheme.typography.displayMedium, modifier = Modifier.weight(1f))
                             }
-                            Column(horizontalAlignment = Alignment.End) {
-                                Text("STRING", color = TextMuted, style = MaterialTheme.typography.labelSmall)
-                                Text("${current.stringNumber}", color = TextPrimary, style = MaterialTheme.typography.titleLarge)
+                            if (!hideTargetPosition) {
+                                Column(horizontalAlignment = Alignment.End) {
+                                    Text("STRING", color = TextMuted, style = MaterialTheme.typography.labelSmall)
+                                    Text("${current.stringNumber}", color = TextPrimary, style = MaterialTheme.typography.titleLarge)
+                                }
                             }
                         }
                         Text(
-                            if (current.fret == 0) "Open string" else "Position on the neck · fret ${current.fret}",
+                            when {
+                                hideTargetPosition -> "Play the note without using the position cue."
+                                current.fret == 0 -> "Open string"
+                                else -> "Position on the neck · fret ${current.fret}"
+                            },
                             color = TextSecondary,
                             style = MaterialTheme.typography.bodySmall
                         )
