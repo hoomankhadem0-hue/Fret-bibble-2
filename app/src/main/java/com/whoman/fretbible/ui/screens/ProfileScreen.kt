@@ -22,7 +22,15 @@ import com.whoman.fretbible.ui.theme.*
   Text("AUDIO",color=TextMuted,style=MaterialTheme.typography.labelLarge);Text("Microphone sensitivity",style=MaterialTheme.typography.titleLarge);Text("Controls how quiet a note can be before the detector ignores it.",color=TextSecondary)
   Slider(value=sensitivity,onValueChange={sensitivity=it;AudioSettings.setSensitivity(context,it)},valueRange=0.00005f..0.006f,steps=23)
   Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween){Text("MORE SENSITIVE",color=Lime,style=MaterialTheme.typography.labelSmall);Text("%.5f".format(sensitivity),color=TextMuted,style=MaterialTheme.typography.labelSmall);Text("LESS SENSITIVE",color=TextMuted,style=MaterialTheme.typography.labelSmall)}
-  HorizontalDivider(color=Border);Text("PRACTICE",color=TextMuted,style=MaterialTheme.typography.labelLarge);SettingsRow("Pitch matching","Note + octave");SettingsRow("Tolerance","Cents do not block a correct note");SettingsRow("Tuning","Standard E A D G B E");Text("Practice mode, target count and fret range are configured at the start of each session.",color=TextSecondary,style=MaterialTheme.typography.bodySmall)
+  HorizontalDivider(color=Border)
+  Text("PRACTICE",color=TextMuted,style=MaterialTheme.typography.labelLarge)
+  SettingsRow("Pitch matching","Note + octave")
+  SettingsRow("Tolerance","Cents do not block a correct note")
+  SettingsRow("Tuning","Standard E A D G B E")
+  Text("Practice mode, target count and fret range are configured at the start of each session.",color=TextSecondary,style=MaterialTheme.typography.bodySmall)
+  HorizontalDivider(color=Border)
+  Text("APP SETTINGS",color=TextMuted,style=MaterialTheme.typography.labelLarge)
+  Text("Three core settings are fixed for consistency: standard tuning, note+octave matching, and cents-independent correctness.",color=TextSecondary,style=MaterialTheme.typography.bodySmall)
   HorizontalDivider(color=Border);Text("FRET BIBLE",color=Lime,style=MaterialTheme.typography.labelLarge);Text("made by Hooman",color=TextSecondary)
  }}
 @Composable private fun SettingsRow(title:String,value:String){Row(Modifier.fillMaxWidth().padding(vertical=8.dp),horizontalArrangement=Arrangement.SpaceBetween){Text(title);Text(value,color=TextSecondary)}}
