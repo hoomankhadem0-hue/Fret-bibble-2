@@ -7,16 +7,20 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
+import com.whoman.fretbible.R
 import com.whoman.fretbible.ui.theme.*
 import com.whoman.fretbible.ui.components.*
 import kotlinx.coroutines.delay
@@ -52,14 +56,17 @@ fun NameOnboardingScreen(onNameSaved: (String) -> Unit) {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Surface(
-                    modifier = Modifier.size(88.dp).scale(scale),
-                    shape = RoundedCornerShape(24.dp),
-                    color = LimeSoft,
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Lime.copy(alpha = .28f))
+                    modifier = Modifier.size(96.dp).scale(scale),
+                    shape = RoundedCornerShape(26.dp),
+                    color = Color(0xFF0A0D0A),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Lime.copy(alpha = .22f))
                 ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Text("F", color = Lime, style = MaterialTheme.typography.displayMedium)
-                    }
+                    Image(
+                        painter = painterResource(R.drawable.ic_fret_bible_mark),
+                        contentDescription = "Fret Bible",
+                        modifier = Modifier.fillMaxSize().padding(10.dp),
+                        contentScale = ContentScale.Fit
+                    )
                 }
 
                 Spacer(Modifier.height(24.dp))
