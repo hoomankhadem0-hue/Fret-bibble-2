@@ -2,24 +2,26 @@ package com.whoman.fretbible.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.whoman.fretbible.core.model.FretboardData
 import com.whoman.fretbible.practice.PracticeStatsStore
 import com.whoman.fretbible.ui.components.*
 import com.whoman.fretbible.ui.theme.*
 
 @Composable
-fun HomeScreen(onStartPractice: () -> Unit, onOpenDictionary: () -> Unit) {
+fun HomeScreen(
+    onStartPractice: () -> Unit,
+    onOpenDictionary: () -> Unit,
+    onOpenAnalyzer: () -> Unit
+) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val stats = remember { PracticeStatsStore.load(context) }
 
@@ -39,7 +41,11 @@ fun HomeScreen(onStartPractice: () -> Unit, onOpenDictionary: () -> Unit) {
             )
 
             SurfaceCard(modifier = Modifier.fillMaxWidth(), elevated = true) {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
                         Text("NEXT SESSION", color = Lime, style = MaterialTheme.typography.labelMedium)
                         Text("Find the Note", style = MaterialTheme.typography.headlineSmall)
@@ -59,21 +65,19 @@ fun HomeScreen(onStartPractice: () -> Unit, onOpenDictionary: () -> Unit) {
                 MiniStat("POINTS", stats.points.toString(), Modifier.weight(1f))
             }
 
-            SectionLabel("THE NECK")
-            SurfaceCard(modifier = Modifier.fillMaxWidth().clickable(onClick = onOpenDictionary)) {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                        Text("Standard tuning", style = MaterialTheme.typography.titleMedium)
-                        Text("Open strings → fret 12 · tap to open the full note dictionary", color = TextSecondary, style = MaterialTheme.typography.bodySmall)
-                    }
-                    Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                        Text("E A D G B E", color = Lime, style = MaterialTheme.typography.labelMedium)
-                        Text("OPEN  ↗", color = TextMuted, style = MaterialTheme.typography.labelSmall)
-                    }
-                    Text("OPEN", color = Lime, style = MaterialTheme.typography.labelSmall)
-                }
-                HomeFretboard()
-            }
+            SectionLabel("LEARN")
+            ToolCard(
+                title = "Fretboard Dictionary",
+                description = "Browse every note, string and fret in standard tuning.",
+                meta = "OPEN → FRET 21",
+                onClick = onOpenDictionary
+            )
+            ToolCard(
+                title = "Song Analyzer",
+                description = "Turn a track into key, tempo and harmonic landmarks.",
+                meta = "AUDIO → ANALYSIS",
+                onClick = onOpenAnalyzer
+            )
 
             SectionLabel("THE LOOP")
             SurfaceCard(modifier = Modifier.fillMaxWidth()) {
@@ -82,18 +86,39 @@ fun HomeScreen(onStartPractice: () -> Unit, onOpenDictionary: () -> Unit) {
                 LoopStep("03", "Learn", "Get feedback and build recall.")
             }
 
-            SurfaceCard(modifier = Modifier.fillMaxWidth().clickable(onClick = onOpenDictionary)) {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                        Text("BUILT FOR CONSISTENCY", color = Lime, style = MaterialTheme.typography.labelMedium)
-                        Text("Short sessions. Real repetition. Less staring at diagrams.", color = TextPrimary, style = MaterialTheme.typography.bodyMedium)
-                    }
-                    Text("21", color = TextPrimary, style = MaterialTheme.typography.headlineSmall)
-                }
-                Text("Maximum fret range", color = TextMuted, style = MaterialTheme.typography.bodySmall)
-            }
-
             Spacer(Modifier.height(8.dp))
+        }
+    }
+}
+
+@Composable
+private fun ToolCard(
+    title: String,
+    description: String,
+    meta: String,
+    onClick: () -> Unit
+) {
+    Surface(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        color = ElevatedSurface.copy(alpha = .92f),
+        border = androidx.compose.foundation.BorderStroke(1.dp, Border.copy(alpha = .78f))
+    ) {
+        Row(
+            Modifier.padding(horizontal = 16.dp, vertical = 15.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(shape = RoundedCornerShape(13.dp), color = LimeSoft) {
+                Text("↗", color = Lime, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(horizontal = 11.dp, vertical = 9.dp))
+            }
+            Spacer(Modifier.width(13.dp))
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                Text(title, color = TextPrimary, style = MaterialTheme.typography.titleMedium)
+                Text(description, color = TextSecondary, style = MaterialTheme.typography.bodySmall)
+                Text(meta, color = TextMuted, style = MaterialTheme.typography.labelSmall)
+            }
+            Text("›", color = Lime, style = MaterialTheme.typography.headlineSmall)
         }
     }
 }
@@ -108,57 +133,6 @@ private fun LoopStep(number: String, title: String, description: String) {
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(title, color = TextPrimary, style = MaterialTheme.typography.titleSmall)
             Text(description, color = TextSecondary, style = MaterialTheme.typography.bodySmall)
-        }
-    }
-}
-
-@Composable
-private fun HomeFretboard() {
-    val positions = remember { FretboardData.all(12) }
-    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(top = 2.dp)) {
-        Column(Modifier.width(44.dp)) {
-            Spacer(Modifier.height(24.dp))
-            (1..6).forEach { stringNumber ->
-                Row(Modifier.height(39.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text("S$stringNumber", color = TextMuted, style = MaterialTheme.typography.labelSmall)
-                }
-            }
-        }
-        Column {
-            Row(Modifier.height(24.dp)) {
-                (0..12).forEach { fret ->
-                    Text(
-                        if (fret == 0) "O" else "$fret",
-                        color = TextMuted,
-                        style = MaterialTheme.typography.labelSmall,
-                        modifier = Modifier.width(50.dp).padding(start = 4.dp)
-                    )
-                }
-            }
-            (1..6).forEach { stringNumber ->
-                Row(Modifier.height(39.dp)) {
-                    positions.filter { it.stringNumber == stringNumber }.forEach { pos ->
-                        Box(
-                            Modifier
-                                .width(50.dp)
-                                .fillMaxHeight()
-                                .padding(2.dp)
-                                .background(
-                                    if (pos.fret == 0) ElevatedSurface else Background,
-                                    RoundedCornerShape(7.dp)
-                                )
-                        ) {
-                            Column(
-                                Modifier.fillMaxSize().padding(3.dp),
-                                verticalArrangement = Arrangement.Center
-                            ) {
-                                Text(pos.note.display, color = if (pos.fret == 0) Lime else TextPrimary, style = MaterialTheme.typography.labelLarge)
-                                Text("${pos.octave}", color = TextMuted, style = MaterialTheme.typography.labelSmall)
-                            }
-                        }
-                    }
-                }
-            }
         }
     }
 }
