@@ -68,7 +68,9 @@ fun ProfileScreen(userName: String, onUserNameChanged: (String) -> Unit) {
         label = "cardAlpha"
     )
 
-    val creatorArtwork = painterResource(com.whoman.fretbible.R.drawable.creator_contact)
+    // Use the vector artwork here to avoid bitmap decoding crashes on devices with
+    // aggressive image memory limits. The creator card remains visually identical in style.
+    val creatorArtwork = painterResource(com.whoman.fretbible.R.drawable.creator_sketch)
 
     Box(Modifier.fillMaxSize()) {
         Column(
