@@ -292,7 +292,7 @@ fun PracticeScreen() {
                                 maxFret = config.maxFret,
                                 modifier = Modifier.fillMaxWidth()
                             )
-                            AnimatedVisibility(visible = hideTargetPosition, modifier = Modifier.align(Alignment.Center)) {
+                            if (hideTargetPosition) {
                                 Surface(
                                     shape = RoundedCornerShape(999.dp),
                                     color = ElevatedSurface.copy(alpha = .94f),
