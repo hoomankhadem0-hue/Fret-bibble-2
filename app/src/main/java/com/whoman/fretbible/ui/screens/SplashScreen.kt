@@ -67,3 +67,4 @@ fun SplashScreen(onFinished: () -> Unit) {
         }
     }
 }
+
