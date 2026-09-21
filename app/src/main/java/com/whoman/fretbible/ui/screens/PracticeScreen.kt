@@ -151,7 +151,7 @@ fun PracticeScreen(userName: String) {
         if (granted) startNew()
     }
 
-    DisposableEffect(Unit) { onDispose { if (phase == PracticePhase.ACTIVE || phase == PracticePhase.COMPLETE) saveSession(); audio.stop() } }
+    DisposableEffect(Unit) { onDispose { saveSession(); audio.stop() } }
 
     LaunchedEffect(countdownToken, phase) {
         if (countdownToken == 0 || phase != PracticePhase.COUNTDOWN) return@LaunchedEffect
@@ -375,107 +375,7 @@ fun PracticeScreen(userName: String) {
                             }
                         }
                         Text(
-                            when {
-                                hideTargetPosition -> "Play the note without using the position cue."
-                                current.fret == 0 -> "Open string"
-                                else -> "Position on the neck · fret ${current.fret}"
-                            },
-                            color = TextSecondary,
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                    }
-
-                    SurfaceCard(modifier = Modifier.fillMaxWidth()) {
-                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                                Text("POSITION VISIBILITY", color = TextMuted, style = MaterialTheme.typography.labelSmall)
-                                Text(
-                                    if (hideTargetPosition) "Hidden · recall from memory" else "Visible · use as a reference",
-                                    color = TextPrimary,
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
-                            }
-                            Switch(
-                                checked = hideTargetPosition,
-                                onCheckedChange = { hideTargetPosition = it }
-                            )
-                        }
-                        Box(
-                            Modifier
-                                .fillMaxWidth()
-                                .height(148.dp)
-                                .clip(RoundedCornerShape(15.dp))
-                                .background(Background)
-                        ) {
-                            Fretboard(
-                                highlightedString = if (hideTargetPosition) null else current.stringNumber,
-                                highlightedFret = if (hideTargetPosition) null else current.fret,
-                                maxFret = config.maxFret,
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                            if (hideTargetPosition) {
-                                Surface(
-                                    shape = RoundedCornerShape(999.dp),
-                                    color = ElevatedSurface.copy(alpha = .94f),
-                                    border = androidx.compose.foundation.BorderStroke(1.dp, Border),
-                                ) {
-                                    Text(
-                                        "POSITION HIDDEN",
-                                        color = TextSecondary,
-                                        style = MaterialTheme.typography.labelSmall,
-                                        modifier = Modifier.padding(horizontal = 13.dp, vertical = 8.dp)
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    SurfaceCard(modifier = Modifier.fillMaxWidth()) {
-                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                                Text(if (running) "MIC ACTIVE" else "READY", color = if (running) Lime else TextMuted, style = MaterialTheme.typography.labelSmall)
-                                Text(status, color = statusColor, style = MaterialTheme.typography.titleLarge)
-                            }
-                            Surface(shape = RoundedCornerShape(12.dp), color = LimeSoft) {
-                                Text(
-                                    detected?.let { it.note.display + it.octave } ?: "—",
-                                    color = TextPrimary,
-                                    style = MaterialTheme.typography.titleMedium,
-                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp)
-                                )
-                            }
-                        }
-                        PitchMeter(detected)
-                        Text(
-                            detected?.let {
-                                "${it.frequencyHz.toInt()} Hz · ${if (it.cents >= 0) "+" else ""}${it.cents.toInt()}¢"
-                            } ?: "Play one clean note · mute the other strings",
-                            color = TextMuted,
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                    }
-                }
-
-                if (denied) {
-                    SurfaceCard(modifier = Modifier.fillMaxWidth()) {
-                        Text("Microphone permission is required for practice.", color = Error, style = MaterialTheme.typography.bodySmall)
-                    }
-                }
-
-                Spacer(Modifier.height(6.dp))
-            }
-
-            Surface(
-                color = SurfaceStrong,
-                tonalElevation = 8.dp,
-                shadowElevation = 0.dp,
-                border = androidx.compose.foundation.BorderStroke(1.dp, Border)
-            ) {
-                Row(
-                    Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    when (phase) {
+                            when (phase) {
                         PracticePhase.COUNTDOWN -> {
                             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                                 Text("GET READY", color = Lime, style = MaterialTheme.typography.labelSmall)
@@ -705,6 +605,60 @@ private fun TimerPickerDialog(
                     onClick = { onSave(if (enabled) seconds.toInt().coerceIn(1, 120) else null) },
                     modifier = Modifier.fillMaxWidth()
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun PracticeOverviewDialog(
+    result: PracticeSessionOverview,
+    onDismiss: () -> Unit
+) {
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Surface(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 22.dp),
+            shape = RoundedCornerShape(24.dp),
+            color = ElevatedSurface,
+            border = androidx.compose.foundation.BorderStroke(1.dp, Border)
+        ) {
+            Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                Text(
+                    if (result.penalty > 0) "SESSION ENDED" else "SESSION COMPLETE",
+                    color = Lime,
+                    style = MaterialTheme.typography.labelMedium
+                )
+                Text(
+                    result.points.toString() + " pts",
+                    color = if (result.points < 0) Error else TextPrimary,
+                    style = MaterialTheme.typography.displayMedium
+                )
+                if (result.penalty > 0) {
+                    Text(
+                        "-" + result.penalty.toString() + " point penalty for ending early.",
+                        color = Warning,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    MiniStat("QUESTIONS", result.completed.toString() + "/" + result.total.toString(), Modifier.weight(1f))
+                    MiniStat("ACCURACY", result.accuracy.toString() + "%", Modifier.weight(1f), accent = true)
+                }
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    MiniStat("CORRECT", result.correct.toString(), Modifier.weight(1f))
+                    MiniStat(
+                        "TIME",
+                        if (result.elapsedSeconds >= 60) (result.elapsedSeconds / 60).toString() + "m " + (result.elapsedSeconds % 60).toString() + "s" else result.elapsedSeconds.toString() + "s",
+                        Modifier.weight(1f)
+                    )
+                }
+                Text(
+                    if (result.timerSeconds == null) "Training mode · no score" else result.timerSeconds.toString() + "s per note",
+                    color = TextSecondary,
+                    style = MaterialTheme.typography.bodySmall
+                )
+                PrimaryAction("DONE", onClick = onDismiss, modifier = Modifier.fillMaxWidth())
             }
         }
     }
