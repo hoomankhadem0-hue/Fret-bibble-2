@@ -174,26 +174,56 @@ object MusicAnalyzer {
 
     fun matchProgressions(chords: List<ChordEstimate>, key: String, maxResults: Int = 5): List<ProgressionMatch> {
         if (chords.size < 2 || key == "Unknown") return emptyList()
-        val romans = chords.mapNotNull { ProgressionLibrary.romanFor(it.symbol, key) }
-        if (romans.size < 2) return emptyList()
+
+        val romanChords = chords.mapNotNull { chord ->
+            ProgressionLibrary.romanFor(chord.symbol, key)?.let { it to chord }
+        }
+        if (romanChords.size < 2) return emptyList()
+
         val matches = mutableListOf<ProgressionMatch>()
         for (pattern in ProgressionLibrary.patterns) {
-            if (pattern.numerals.isEmpty()) continue
             val p = pattern.numerals
-            for (start in romans.indices) {
-                if (start + 2 > romans.size) break
-                val maxLen = minOf(p.size, romans.size - start)
+            if (p.size < 2) continue
+
+            for (startIndex in romanChords.indices) {
+                val maxLen = minOf(p.size, romanChords.size - startIndex)
+                if (maxLen < 2) continue
+
                 for (len in maxLen downTo 2) {
-                    var hits = 0.0
-                    for (i in 0 until len) if (romans[start + i] == p[i]) hits += 1.0
-                    val fit = hits / len
+                    var exact = 0.0
+                    var weighted = 0.0
+                    for (i in 0 until len) {
+                        if (romanChords[startIndex + i].first == p[i]) {
+                            exact += 1.0
+                            weighted += if (romanChords[startIndex + i].second.confidence >= 0.65) 1.0 else 0.8
+                        }
+                    }
+
+                    val fit = weighted / len
                     val coverage = len.toDouble() / p.size.coerceAtLeast(1)
-                    val score = fit * 0.72 + coverage * 0.28
-                    if (score >= 0.72) matches += ProgressionMatch(pattern, start, len, score)
+                    val lengthBonus = (len - 1).toDouble() / (p.size.coerceAtLeast(2) - 1)
+                    val score = (fit * 0.62 + coverage * 0.18 + lengthBonus * 0.20) *
+                        pattern.weight.coerceAtMost(1.5) / 1.5
+
+                    if (score >= 0.66 && (exact >= len - 1 || len <= 2)) {
+                        matches += ProgressionMatch(pattern, startIndex, len, score.coerceIn(0.0, 1.0))
+                    }
                 }
             }
         }
-        return matches.sortedByDescending { it.score }.distinctBy { it.pattern.name + ":" + it.startIndex }.take(maxResults)
+
+        return matches
+            .sortedWith(compareByDescending<ProgressionMatch> { it.score }.thenByDescending { it.length })
+            .filter { candidate ->
+                matches.none { other ->
+                    other !== candidate &&
+                    other.pattern.name == candidate.pattern.name &&
+                    abs(other.startIndex - candidate.startIndex) <= 1 &&
+                    other.length > candidate.length &&
+                    other.score >= candidate.score - 0.03
+                }
+            }
+            .take(maxResults)
     }
 
     private fun mergeShortChanges(input: List<ChordEstimate>, minDuration: Double): List<ChordEstimate> {
