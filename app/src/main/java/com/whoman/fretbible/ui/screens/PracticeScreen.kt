@@ -33,6 +33,8 @@ import kotlinx.coroutines.launch
 
 private const val END_SESSION_PENALTY = 100
 
+private enum class PracticePhase { READY, COUNTDOWN, ACTIVE, COMPLETE }
+
 private data class PracticeSessionOverview(
     val completed: Int,
     val total: Int,
@@ -67,6 +69,7 @@ fun PracticeScreen(userName: String) {
     var countdown by remember { mutableStateOf<Int?>(null) }
     var countdownActive by remember { mutableStateOf(false) }
     var countdownToken by remember { mutableIntStateOf(0) }
+    var phase by remember { mutableStateOf(PracticePhase.READY) }
     var overview by remember { mutableStateOf<PracticeSessionOverview?>(null) }
     var stableFrames by remember { mutableIntStateOf(0) }
     var lastMidi by remember { mutableIntStateOf(-999) }
@@ -93,7 +96,9 @@ fun PracticeScreen(userName: String) {
     fun finishSession(penalty: Int = 0) {
         if (!sessionStarted || sessionSaved) return
         running = false
+        countdownActive = false
         countdown = null
+        phase = PracticePhase.COMPLETE
         audio.stop()
         val elapsed = currentElapsedSeconds()
         val attempts = correct + misses
@@ -113,7 +118,7 @@ fun PracticeScreen(userName: String) {
     }
 
     fun endSession() {
-        if (!running) return
+        if (phase != PracticePhase.ACTIVE || !running) return
         val penalty = if (config.timerSeconds != null) END_SESSION_PENALTY else 0
         if (penalty > 0) points -= penalty
         finishSession(penalty)
@@ -135,6 +140,7 @@ fun PracticeScreen(userName: String) {
         sessionSaved = false
         sessionStartedAt = 0L
         overview = null
+        phase = PracticePhase.COUNTDOWN
         countdown = 3
         countdownActive = true
         countdownToken++
@@ -145,12 +151,13 @@ fun PracticeScreen(userName: String) {
         if (granted) startNew()
     }
 
-    DisposableEffect(Unit) { onDispose { saveSession(); audio.stop() } }
+    DisposableEffect(Unit) { onDispose { if (phase == PracticePhase.ACTIVE || phase == PracticePhase.COMPLETE) saveSession(); audio.stop() } }
 
-    LaunchedEffect(countdownToken) {
-        if (countdownToken == 0) return@LaunchedEffect
+    LaunchedEffect(countdownToken, phase) {
+        if (countdownToken == 0 || phase != PracticePhase.COUNTDOWN) return@LaunchedEffect
         var value = 3
-        while (value > 0) {
+        while (value > 0 && phase == PracticePhase.COUNTDOWN) {
+            countdown = value
             val tone = ToneGenerator(AudioManager.STREAM_MUSIC, 72)
             try {
                 tone.startTone(
@@ -162,14 +169,17 @@ fun PracticeScreen(userName: String) {
                 tone.release()
             }
             value--
-            countdown = value.takeIf { it > 0 }
         }
-        sessionStarted = true
-        sessionSaved = false
-        sessionStartedAt = System.currentTimeMillis()
-        countdownActive = false
-        running = true
-        scope.launch { audio.start() }
+        if (phase == PracticePhase.COUNTDOWN) {
+            countdown = null
+            countdownActive = false
+            sessionStarted = true
+            sessionSaved = false
+            sessionStartedAt = System.currentTimeMillis()
+            running = true
+            phase = PracticePhase.ACTIVE
+            scope.launch { audio.start() }
+        }
     }
 
 
@@ -465,14 +475,14 @@ fun PracticeScreen(userName: String) {
                     Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    when {
-                        countdownActive -> {
+                    when (phase) {
+                        PracticePhase.COUNTDOWN -> {
                             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                                 Text("GET READY", color = Lime, style = MaterialTheme.typography.labelSmall)
-                                Text("Starting in ${countdown ?: 0}s", color = TextPrimary, style = MaterialTheme.typography.bodySmall)
+                                Text("Starting in ${countdown ?: 3}s", color = TextPrimary, style = MaterialTheme.typography.bodySmall)
                             }
                         }
-                        running -> {
+                        PracticePhase.ACTIVE -> {
                             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                                 Text("SESSION ACTIVE", color = TextMuted, style = MaterialTheme.typography.labelSmall)
                                 Text(
@@ -484,15 +494,15 @@ fun PracticeScreen(userName: String) {
                             Spacer(Modifier.width(10.dp))
                             SecondaryAction("END SESSION", onClick = { endSession() }, modifier = Modifier.width(150.dp))
                         }
-                        sessionStarted -> {
+                        PracticePhase.COMPLETE -> {
                             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                                 Text("LAST SESSION", color = TextMuted, style = MaterialTheme.typography.labelSmall)
                                 Text(points.toString() + " pts · " + accuracy.toString() + "% accuracy", color = TextPrimary, style = MaterialTheme.typography.bodySmall)
                             }
                             Spacer(Modifier.width(10.dp))
-                            PrimaryAction("NEW SESSION", onClick = { startNew() }, enabled = countdown == null, modifier = Modifier.width(150.dp))
+                            PrimaryAction("NEW SESSION", onClick = { startNew() }, modifier = Modifier.width(150.dp))
                         }
-                        else -> {
+                        PracticePhase.READY -> {
                             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                                 Text("READY", color = TextMuted, style = MaterialTheme.typography.labelSmall)
                                 Text(
@@ -506,10 +516,11 @@ fun PracticeScreen(userName: String) {
                                 "START",
                                 onClick = {
                                     if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
-                                        if (!running && countdown == null) startNew()
-                                    } else launcher.launch(Manifest.permission.RECORD_AUDIO)
+                                        startNew()
+                                    } else {
+                                        launcher.launch(Manifest.permission.RECORD_AUDIO)
+                                    }
                                 },
-                                enabled = countdown == null,
                                 modifier = Modifier.width(150.dp)
                             )
                         }
@@ -518,7 +529,7 @@ fun PracticeScreen(userName: String) {
             }
         }
 
-        countdown?.let { value ->
+        if (phase == PracticePhase.COUNTDOWN) countdown?.let { value ->
             Surface(
                 modifier = Modifier.fillMaxSize(),
                 color = Background.copy(alpha = .94f)
@@ -693,60 +704,6 @@ private fun TimerPickerDialog(
                     onClick = { onSave(if (enabled) seconds.toInt().coerceIn(1, 120) else null) },
                     modifier = Modifier.fillMaxWidth()
                 )
-            }
-        }
-    }
-}
-
-@Composable
-private fun PracticeOverviewDialog(
-    result: PracticeSessionOverview,
-    onDismiss: () -> Unit
-) {
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Surface(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 22.dp),
-            shape = RoundedCornerShape(24.dp),
-            color = ElevatedSurface,
-            border = androidx.compose.foundation.BorderStroke(1.dp, Border)
-        ) {
-            Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                Text(
-                    if (result.penalty > 0) "SESSION ENDED" else "SESSION COMPLETE",
-                    color = Lime,
-                    style = MaterialTheme.typography.labelMedium
-                )
-                Text(
-                    result.points.toString() + " pts",
-                    color = if (result.points < 0) Error else TextPrimary,
-                    style = MaterialTheme.typography.displayMedium
-                )
-                if (result.penalty > 0) {
-                    Text(
-                        "-" + result.penalty.toString() + " point penalty for ending early.",
-                        color = Warning,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    MiniStat("QUESTIONS", result.completed.toString() + "/" + result.total.toString(), Modifier.weight(1f))
-                    MiniStat("ACCURACY", result.accuracy.toString() + "%", Modifier.weight(1f), accent = true)
-                }
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    MiniStat("CORRECT", result.correct.toString(), Modifier.weight(1f))
-                    MiniStat(
-                        "TIME",
-                        if (result.elapsedSeconds >= 60) (result.elapsedSeconds / 60).toString() + "m " + (result.elapsedSeconds % 60).toString() + "s" else result.elapsedSeconds.toString() + "s",
-                        Modifier.weight(1f)
-                    )
-                }
-                Text(
-                    if (result.timerSeconds == null) "Training mode · no score" else result.timerSeconds.toString() + "s per note",
-                    color = TextSecondary,
-                    style = MaterialTheme.typography.bodySmall
-                )
-                PrimaryAction("DONE", onClick = onDismiss, modifier = Modifier.fillMaxWidth())
             }
         }
     }
