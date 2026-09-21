@@ -413,31 +413,51 @@ fun PracticeScreen(userName: String) {
                     Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    if (sessionStarted && !running) {
-                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                            Text("LAST SESSION", color = TextMuted, style = MaterialTheme.typography.labelSmall)
-                            Text("${points} pts · ${accuracy}% accuracy", color = TextPrimary, style = MaterialTheme.typography.bodySmall)
+                    when {
+                        running -> {
+                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                Text("SESSION ACTIVE", color = TextMuted, style = MaterialTheme.typography.labelSmall)
+                                Text(
+                                    if (config.timerSeconds == null) "Training mode" else config.timerSeconds.toString() + "s per note",
+                                    color = TextPrimary,
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
+                            Spacer(Modifier.width(10.dp))
+                            SecondaryAction("END SESSION", onClick = { endSession() }, modifier = Modifier.width(150.dp))
                         }
-                    } else {
-                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                            Text("READY WHEN YOU ARE", color = TextMuted, style = MaterialTheme.typography.labelSmall)
-                            Text("Listen → find → play", color = TextPrimary, style = MaterialTheme.typography.bodySmall)
+                        sessionStarted -> {
+                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                Text("LAST SESSION", color = TextMuted, style = MaterialTheme.typography.labelSmall)
+                                Text(points.toString() + " pts · " + accuracy.toString() + "% accuracy", color = TextPrimary, style = MaterialTheme.typography.bodySmall)
+                            }
+                            Spacer(Modifier.width(10.dp))
+                            PrimaryAction("NEW SESSION", onClick = { startNew() }, enabled = countdown == null, modifier = Modifier.width(150.dp))
+                        }
+                        else -> {
+                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                Text("READY", color = TextMuted, style = MaterialTheme.typography.labelSmall)
+                                Text(
+                                    if (config.timerSeconds == null) "Training · no score" else "Timed · shorter = more points",
+                                    color = TextPrimary,
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
+                            Spacer(Modifier.width(10.dp))
+                            PrimaryAction(
+                                "START",
+                                onClick = {
+                                    if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+                                        if (!running && countdown == null) startNew()
+                                    } else launcher.launch(Manifest.permission.RECORD_AUDIO)
+                                },
+                                enabled = countdown == null,
+                                modifier = Modifier.width(150.dp)
+                            )
                         }
                     }
-                    Spacer(Modifier.width(10.dp))
-                    PrimaryAction(
-                        if (sessionStarted && !running) "NEW SESSION" else "START",
-                        onClick = {
-                            if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
-                                if (!running) startNew()
-                            } else launcher.launch(Manifest.permission.RECORD_AUDIO)
-                        },
-                        enabled = !running && countdown == null,
-                        modifier = Modifier.width(150.dp)
-                    )
                 }
             }
-        }
 
         countdown?.let { value ->
             Surface(
