@@ -693,7 +693,7 @@ private fun TimerPickerDialog(
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                         Text("Timed session", color = TextPrimary, style = MaterialTheme.typography.titleMedium)
                         Text(
-                            if (enabled) seconds.toInt().toString() + " seconds per note" else "Training · no score",
+                            if (enabled) (secondsText.toIntOrNull()?.coerceIn(1, 600) ?: 10).toString() + " seconds per note" else "Training · no score",
                             color = TextSecondary,
                             style = MaterialTheme.typography.bodySmall
                         )
