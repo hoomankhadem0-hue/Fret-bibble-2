@@ -128,11 +128,19 @@ object MusicAnalyzer {
                 val penalty = (chroma.sum() - intervals.sumOf { chroma[(root + it) % 12] }) * 0.08
                 score -= penalty
                 if (key != null) {
-                    val roman = ProgressionLibrary.romanFor(noteNames[root] + when (suffix) {\n                        "maj" -> ""\n                        "min" -> "m"\n                        else -> suffix\n                    }, key)
+                    val roman = ProgressionLibrary.romanFor(noteNames[root] + when (suffix) {
+                        "maj" -> ""
+                        "min" -> "m"
+                        else -> suffix
+                    }, key)
                     if (roman != null) score += 0.035
                 }
                 if (previousSymbol != null) {
-                    val romanCandidate = ProgressionLibrary.romanFor(noteNames[root] + when (suffix) {\n                        "maj" -> ""\n                        "min" -> "m"\n                        else -> suffix\n                    }, key ?: "")
+                    val romanCandidate = ProgressionLibrary.romanFor(noteNames[root] + when (suffix) {
+                        "maj" -> ""
+                        "min" -> "m"
+                        else -> suffix
+                    }, key ?: "")
                     val romanPrevious = ProgressionLibrary.romanFor(previousSymbol, key ?: "")
                     if (romanCandidate != null && romanPrevious != null) {
                         score += ProgressionLibrary.transitionPrior(romanPrevious, romanCandidate) * 0.22
