@@ -29,7 +29,7 @@ import com.whoman.fretbible.ui.theme.*
 fun ProfileScreen(userName: String, onUserNameChanged: (String) -> Unit) {
     val context = LocalContext.current
     val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
-    var threshold by remember { mutableFloatStateOf(0.00035f) }
+    var threshold by remember { mutableFloatStateOf(0.0015f) }
     var draftName by remember(userName) { mutableStateOf(userName) }
     var showRename by remember { mutableStateOf(false) }
     val stats = remember { PracticeStatsStore.load(context) }
@@ -41,7 +41,7 @@ fun ProfileScreen(userName: String, onUserNameChanged: (String) -> Unit) {
 
     val min = 0.00005f
     val max = 0.006f
-    val sliderValue = ((max - threshold) / (max - min)).coerceIn(0f, 1f)
+    val sliderValue = (1f - kotlin.math.sqrt(((threshold - min) / (max - min)).coerceIn(0f, 1f))).coerceIn(0f, 1f)
     val sensitivityLabel = when {
         sliderValue > .72f -> "High"
         sliderValue > .42f -> "Balanced"
@@ -150,7 +150,7 @@ fun ProfileScreen(userName: String, onUserNameChanged: (String) -> Unit) {
                 Slider(
                     value = sliderValue,
                     onValueChange = {
-                        val next = max - it * (max - min)
+                        val next = min + ((1f - it).coerceIn(0f, 1f).let { value -> value * value }) * (max - min)
                         threshold = next
                         AudioSettings.setSensitivity(context, next)
                     }
@@ -162,7 +162,7 @@ fun ProfileScreen(userName: String, onUserNameChanged: (String) -> Unit) {
                 SecondaryAction(
                     "RESET",
                     onClick = {
-                        threshold = 0.00035f
+                        threshold = 0.0015f
                         AudioSettings.setSensitivity(context, threshold)
                     },
                     modifier = Modifier.fillMaxWidth()
