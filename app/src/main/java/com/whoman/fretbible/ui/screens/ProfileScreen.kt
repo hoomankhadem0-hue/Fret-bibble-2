@@ -57,8 +57,8 @@ fun ProfileScreen(onAnalyzer: () -> Unit) {
         SurfaceCard(modifier = Modifier.fillMaxWidth()) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = androidx.compose.ui.Alignment.Bottom) {
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                    Text("Mic threshold", style = MaterialTheme.typography.titleMedium)
-                    Text("How quiet a note can be before detection is ignored.", color = TextSecondary, style = MaterialTheme.typography.bodySmall)
+                    Text("Microphone sensitivity", style = MaterialTheme.typography.titleMedium)
+                    Text("Raise it for quieter playing; lower it to reject more background noise.", color = TextSecondary, style = MaterialTheme.typography.bodySmall)
                 }
                 Text(sensitivityLabel, color = Lime, style = MaterialTheme.typography.labelMedium)
             }
@@ -73,8 +73,8 @@ fun ProfileScreen(onAnalyzer: () -> Unit) {
             )
 
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("MORE SENSITIVE", color = Lime, style = MaterialTheme.typography.labelSmall)
                 Text("LESS SENSITIVE", color = TextMuted, style = MaterialTheme.typography.labelSmall)
+                Text("MORE SENSITIVE", color = Lime, style = MaterialTheme.typography.labelSmall)
             }
 
             SecondaryAction(
