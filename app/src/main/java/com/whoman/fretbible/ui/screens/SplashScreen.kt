@@ -72,8 +72,6 @@ fun SplashScreen(onFinished: () -> Unit) {
                 }
                 Spacer(Modifier.height(18.dp))
                 Text("FRET BIBLE", color = TextPrimary, fontSize = 35.sp, fontWeight = FontWeight.Black, letterSpacing = 2.2.sp)
-                Spacer(Modifier.height(6.dp))
-                Text("made for the neck", color = TextMuted, style = androidx.compose.material3.MaterialTheme.typography.bodySmall)
             }
         }
     }
