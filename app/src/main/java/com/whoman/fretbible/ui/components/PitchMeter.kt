@@ -18,7 +18,7 @@ import com.whoman.fretbible.ui.theme.*
 @Composable
 fun PitchMeter(detected: DetectedNote?, modifier: Modifier = Modifier) {
     val target = ((detected?.cents ?: 0.0).coerceIn(-50.0, 50.0) / 50.0).toFloat()
-    val animated by animateFloatAsState(target, label = "pitchMeter")
+    val animated = animateFloatAsState(target, label = "pitchMeter").value
     val centered = kotlin.math.abs(animated) < .08f
 
     Column(modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
