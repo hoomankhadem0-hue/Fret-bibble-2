@@ -73,8 +73,8 @@ fun AppNavHost(userName: String, onUserNameChanged: (String) -> Unit) {
                     onOpenAnalyzer = { route = Route.Analyzer }
                 )
                 Route.Practice -> PracticeScreen(userName = userName)
-                Route.Roadmap -> RoadmapScreen()
-                Route.Progress -> ProgressScreen()
+                Route.Roadmap -> RoadmapScreen(userName = userName)
+                Route.Progress -> ProgressScreen(userName = userName)
                 Route.Profile -> ProfileScreen(userName = userName, onUserNameChanged = onUserNameChanged)
                 Route.Analyzer -> AnalyzerScreen()
                 Route.Dictionary -> FretboardExplorerScreen { route = Route.Home }
