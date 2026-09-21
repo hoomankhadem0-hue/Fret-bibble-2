@@ -1,6 +1,8 @@
 package com.whoman.fretbible.ui.screens
 
 import android.Manifest
+import android.media.AudioManager
+import android.media.ToneGenerator
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -47,7 +49,8 @@ fun PracticeScreen(userName: String) {
     var running by remember { mutableStateOf(false) }
     var locked by remember { mutableStateOf(false) }
     var denied by remember { mutableStateOf(false) }
-    var secondsLeft by remember { mutableIntStateOf(10) }
+    var secondsLeft by remember { mutableIntStateOf(config.timerSeconds ?: 0) }
+    var countdown by remember { mutableStateOf<Int?>(null) }
     var stableFrames by remember { mutableIntStateOf(0) }
     var lastMidi by remember { mutableIntStateOf(-999) }
     var sessionStarted by remember { mutableStateOf(false) }
@@ -70,10 +73,19 @@ fun PracticeScreen(userName: String) {
     fun startNew() {
         PracticePreferences.save(context, config)
         targets = engine.newSession(config.count, config.maxFret, config.mode)
-        index = 0; points = 0; correct = 0; misses = 0; streak = 0; secondsLeft = 10
-        feedback = AttemptState.LISTENING; locked = false; resetStability()
-        sessionStarted = true; sessionSaved = false; sessionStartedAt = System.currentTimeMillis(); running = true
-        scope.launch { audio.start() }
+        index = 0
+        points = 0
+        correct = 0
+        misses = 0
+        streak = 0
+        secondsLeft = config.timerSeconds ?: 0
+        feedback = AttemptState.LISTENING
+        locked = false
+        resetStability()
+        sessionStarted = false
+        sessionSaved = false
+        sessionStartedAt = 0L
+        countdown = 3
     }
 
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -83,14 +95,35 @@ fun PracticeScreen(userName: String) {
 
     DisposableEffect(Unit) { onDispose { saveSession(); audio.stop() } }
 
-    LaunchedEffect(running, index, config.timerEnabled) {
+    LaunchedEffect(countdown) {
+        val start = countdown ?: return@LaunchedEffect
+        var value = start
+        while (value > 0 && countdown != null) {
+            val tone = ToneGenerator(AudioManager.STREAM_MUSIC, 72)
+            tone.startTone(ToneGenerator.TONE_PROP_BEEP, 90)
+            delay(1000)
+            tone.release()
+            value--
+            countdown = if (value > 0) value else null
+        }
+        if (start == 3 && countdown == null) {
+            sessionStarted = true
+            sessionSaved = false
+            sessionStartedAt = System.currentTimeMillis()
+            running = true
+            scope.launch { audio.start() }
+        }
+    }
+
+    LaunchedEffect(running, index, config.timerSeconds) {
         if (!running || !config.timerEnabled || current == null || locked) return@LaunchedEffect
-        secondsLeft = 10
-        while (running && config.timerEnabled && !locked && secondsLeft > 0) {
+        val limit = config.timerSeconds ?: return@LaunchedEffect
+        secondsLeft = limit
+        while (running && config.timerSeconds != null && !locked && secondsLeft > 0) {
             delay(1000)
             if (!locked) secondsLeft--
         }
-        if (running && config.timerEnabled && !locked && secondsLeft == 0) {
+        if (running && config.timerSeconds != null && !locked && secondsLeft == 0) {
             feedback = AttemptState.WRONG_NOTE
             misses++; streak = 0; engine.record(current, false); locked = true
             delay(350)
@@ -109,7 +142,9 @@ fun PracticeScreen(userName: String) {
         if (stableFrames < 2) return@LaunchedEffect
         feedback = engine.evaluate(current, d)
         if (feedback == AttemptState.CORRECT) {
-            val earned = 100 + (if (config.timerEnabled) secondsLeft * 15 else 0) + streak * 25
+            val earned = config.timerSeconds?.let { limit ->
+                100 + ((120 - limit).coerceAtLeast(0) * 2) + streak * 25
+            } ?: 0
             correct++; streak++; points += earned; engine.record(current, true); locked = true
             scope.launch {
                 delay(520)
@@ -127,7 +162,7 @@ fun PracticeScreen(userName: String) {
         AttemptState.CORRECT -> "CORRECT"
         AttemptState.TOO_HIGH -> "TOO HIGH"
         AttemptState.TOO_LOW -> "TOO LOW"
-        AttemptState.WRONG_NOTE -> if (config.timerEnabled && secondsLeft == 0) "TIME'S UP" else "TRY AGAIN"
+        AttemptState.WRONG_NOTE -> if (config.timerSeconds != null && secondsLeft == 0) "TIME'S UP" else "TRY AGAIN"
         AttemptState.LISTENING -> if (running) "LISTENING" else "READY"
     }
     val statusColor by animateColorAsState(
@@ -181,8 +216,8 @@ fun PracticeScreen(userName: String) {
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                 Text("SESSION", color = TextMuted, style = MaterialTheme.typography.labelSmall)
                                 Text(
-                                    if (config.timerEnabled) "${secondsLeft}s" else "NO TIMER",
-                                    color = if (config.timerEnabled && secondsLeft <= 3) Error else Lime,
+                                    if (config.timerSeconds != null) "${secondsLeft}s" else "TRAINING",
+                                    color = if (config.timerSeconds != null && secondsLeft <= 3) Error else Lime,
                                     style = MaterialTheme.typography.labelSmall
                                 )
                             }
@@ -227,15 +262,24 @@ fun PracticeScreen(userName: String) {
 
                         SettingRow("Training mode", config.mode.label) { dialog = "mode" }
 
+                        SettingRow(
+                            "Timer",
+                            config.timerSeconds?.let { "${it} sec · shorter = more points" } ?: "Off · training mode · no score"
+                        ) { dialog = "timer" }
+
                         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                                 Text("Speed timer", color = TextPrimary, style = MaterialTheme.typography.bodyLarge)
-                                Text("10 seconds per target", color = TextSecondary, style = MaterialTheme.typography.bodySmall)
+                                Text(
+                                    config.timerSeconds?.let { "${it} seconds per note" } ?: "Training mode · no score",
+                                    color = TextSecondary,
+                                    style = MaterialTheme.typography.bodySmall
+                                )
                             }
                             Switch(
-                                checked = config.timerEnabled,
+                                checked = config.timerSeconds != null,
                                 onCheckedChange = {
-                                    config = config.copy(timerEnabled = it)
+                                    config = config.copy(timerSeconds = if (it) 10 else null)
                                     PracticePreferences.save(context, config)
                                 }
                             )
@@ -388,32 +432,74 @@ fun PracticeScreen(userName: String) {
                                 if (!running) startNew()
                             } else launcher.launch(Manifest.permission.RECORD_AUDIO)
                         },
-                        enabled = !running,
+                        enabled = !running && countdown == null,
                         modifier = Modifier.width(150.dp)
                     )
                 }
             }
         }
 
-        if (dialog.isNotEmpty()) {
+        countdown?.let { value ->
+            Surface(
+                modifier = Modifier.fillMaxSize(),
+                color = Background.copy(alpha = .94f)
+            ) {
+                Column(
+                    Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text("GET READY", color = Lime, style = MaterialTheme.typography.labelLarge)
+                    Spacer(Modifier.height(10.dp))
+                    Text(value.toString(), color = TextPrimary, style = MaterialTheme.typography.displayLarge)
+                    Spacer(Modifier.height(8.dp))
+                    Text("Your session starts now", color = TextSecondary, style = MaterialTheme.typography.bodyMedium)
+                }
+            }
+        }
+
+        if (dialog.isNotEmpty() && countdown == null) {
             Surface(
                 Modifier.fillMaxSize(),
                 color = Color.Black.copy(alpha = .46f)
             ) {}
             PracticeChoiceDialog(
-                title = if (dialog == "count") "Questions" else "Training mode",
-                subtitle = if (dialog == "count") "Choose the size of this session." else "Change how targets are selected.",
-                options = if (dialog == "count") {
-                    listOf("10 questions" to 10, "20 questions" to 20, "24 questions" to 24, "30 questions" to 30, "50 questions" to 50)
-                } else {
-                    PracticeMode.entries.map { it.label to it.ordinal }
+                title = when (dialog) {
+                    "count" -> "Questions"
+                    "mode" -> "Training mode"
+                    else -> "Timer"
                 },
-                selected = if (dialog == "count") config.count else config.mode.ordinal,
+                subtitle = when (dialog) {
+                    "count" -> "Choose the size of this session."
+                    "mode" -> "Change how targets are selected."
+                    else -> "Set a time limit or practice without one."
+                },
+                options = when (dialog) {
+                    "count" -> listOf("10 questions" to 10, "20 questions" to 20, "24 questions" to 24, "30 questions" to 30, "50 questions" to 50)
+                    "mode" -> PracticeMode.entries.map { it.label to it.ordinal }
+                    else -> listOf(
+                        "No timer · training · no score" to 0,
+                        "3 seconds · high score" to 3,
+                        "5 seconds" to 5,
+                        "7 seconds" to 7,
+                        "10 seconds" to 10,
+                        "15 seconds" to 15,
+                        "20 seconds" to 20,
+                        "30 seconds" to 30,
+                        "60 seconds" to 60,
+                        "120 seconds" to 120
+                    )
+                },
+                selected = when (dialog) {
+                    "count" -> config.count
+                    "mode" -> config.mode.ordinal
+                    else -> config.timerSeconds ?: 0
+                },
                 onSelect = { value ->
-                    if (dialog == "count") {
-                        config = config.copy(count = value)
-                    } else {
-                        config = config.copy(mode = PracticeMode.entries[value])
+                    when (dialog) {
+                        "count" -> config = config.copy(count = value)
+                        "mode" -> config = config.copy(mode = PracticeMode.entries[value])
+                        else -> config = config.copy(timerSeconds = value.takeIf { it > 0 })
                     }
                     PracticePreferences.save(context, config)
                     dialog = ""
