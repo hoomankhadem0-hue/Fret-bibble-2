@@ -134,7 +134,7 @@ fun AnalyzerScreen() {
                                 Text(match.pattern.name, color = TextPrimary, style = MaterialTheme.typography.titleMedium)
                                 Text("${(match.score * 100).roundToInt()}%", color = Lime, style = MaterialTheme.typography.labelMedium)
                             }
-                            Text("${match.pattern.genre} · ${match.pattern.numerals.take(match.length).joinToString("  →  ")}", color = TextSecondary, style = MaterialTheme.typography.bodySmall)
+                            Text("${match.pattern.genre} · ${match.pattern.numerals.take(match.length).joinToString("  ->  ")}", color = TextSecondary, style = MaterialTheme.typography.bodySmall)
                             Text("Starts at ${formatTime(analysis.chords.getOrNull(match.startIndex)?.startSeconds ?: 0.0)} · ${match.length} chords", color = TextMuted, style = MaterialTheme.typography.bodySmall)
                         }
                     }
