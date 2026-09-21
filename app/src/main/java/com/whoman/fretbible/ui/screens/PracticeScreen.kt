@@ -74,6 +74,16 @@ fun PracticeScreen() {
         sessionSaved = true
     }
 
+    fun finishSession() {
+        running = false
+        audio.stop()
+        if (!sessionSaved && sessionStarted) {
+            val elapsed = ((System.currentTimeMillis() - sessionStartMillis) / 1000L).coerceAtLeast(0L)
+            PracticeStatsStore.saveSession(context, points, correct, correct + misses, elapsed)
+            sessionSaved = true
+        }
+    }
+
     fun startNewSession() {
         targets = engine.newSession(24)
         index = 0
@@ -126,8 +136,7 @@ fun PracticeScreen() {
                 locked = false
             } else {
                 saveCurrentSession()
-                running = false
-                audio.stop()
+                finishSession()
             }
         }
     }
@@ -167,8 +176,7 @@ fun PracticeScreen() {
                     locked = false
                 } else {
                     saveCurrentSession()
-                    running = false
-                    audio.stop()
+                    finishSession()
                 }
             }
         } else {
