@@ -168,12 +168,15 @@ fun PracticeScreen(userName: String) {
         while (value > 0 && countdownActive) {
             countdown = value
             runCatching {
-                ToneGenerator(AudioManager.STREAM_MUSIC, 72).use { tone ->
+                val tone = ToneGenerator(AudioManager.STREAM_MUSIC, 72)
+                try {
                     tone.startTone(
                         if (value == 1) ToneGenerator.TONE_PROP_ACK else ToneGenerator.TONE_PROP_BEEP,
                         if (value == 1) 140 else 90
                     )
                     delay(1000)
+                } finally {
+                    tone.release()
                 }
             }.getOrElse {
                 // A device may reject ToneGenerator; the visual countdown still continues.
