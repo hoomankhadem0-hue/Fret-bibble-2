@@ -3,7 +3,7 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <application
         android:allowBackup="true"
-        android:icon="@drawable/ic_fret_bible"
+        android:icon="@drawable/ic_fret_bible_mark"
         android:roundIcon="@drawable/ic_fret_bible"
         android:label="Fret Bible"
         android:supportsRtl="true"
