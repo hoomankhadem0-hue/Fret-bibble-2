@@ -56,7 +56,7 @@ fun ProfileScreen() {
         )
 
         HorizontalDivider(color = Border)
-        Text("PRACTICE", color = TextMuted, style = MaterialTheme.typography.labelLarge), color = TextMuted, style = MaterialTheme.typography.labelLarge)
+        Text("PRACTICE", color = TextMuted, style = MaterialTheme.typography.labelLarge)
         SettingsRow("Pitch matching", "Note + octave")
         SettingsRow("Tolerance", "Cents do not block a correct note")
         SettingsRow("Tuning", "Standard E A D G B E")
