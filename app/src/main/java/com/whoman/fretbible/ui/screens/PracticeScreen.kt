@@ -77,11 +77,7 @@ fun PracticeScreen() {
     fun finishSession() {
         running = false
         audio.stop()
-        if (!sessionSaved && sessionStarted) {
-            val elapsed = ((System.currentTimeMillis() - sessionStartMillis) / 1000L).coerceAtLeast(0L)
-            PracticeStatsStore.saveSession(context, points, correct, correct + misses, elapsed)
-            sessionSaved = true
-        }
+        saveCurrentSession()
     }
 
     fun startNewSession() {
@@ -110,7 +106,7 @@ fun PracticeScreen() {
     }
 
     DisposableEffect(Unit) {
-        onDispose { audio.stop() }
+        onDispose { saveCurrentSession(); audio.stop() }
     }
 
     // Each target gets its own 10-second clock. Timer OFF means no deadline.
