@@ -8,7 +8,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.whoman.fretbible.core.model.FretboardData
@@ -17,8 +16,113 @@ import com.whoman.fretbible.ui.theme.*
 
 @Composable
 fun HomeScreen(onStartPractice: () -> Unit) {
-    var showAbout by rememberSaveable { mutableStateOf(true) }
+    Box(Modifier.fillMaxSize()) {
+        AnimatedBackground()
 
+        Column(
+            Modifier
+                .fillMaxSize()
+                .padding(20.dp)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            Spacer(Modifier.height(6.dp))
+
+            Text("GOOD EVENING", color = TextMuted, style = MaterialTheme.typography.labelLarge)
+            Text("Know the neck.", style = MaterialTheme.typography.headlineLarge)
+            Text(
+                "Learn every note by playing it — not by memorizing a picture.",
+                color = TextSecondary
+            )
+
+            Card(
+                shape = RoundedCornerShape(22.dp),
+                colors = CardDefaults.cardColors(containerColor = ElevatedSurface),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text("TODAY'S PRACTICE", color = TextMuted, style = MaterialTheme.typography.labelLarge)
+                        Text("12 NOTES", color = Lime, style = MaterialTheme.typography.labelLarge)
+                    }
+
+                    Text("Find the Note", style = MaterialTheme.typography.headlineSmall)
+                    Text("Live guitar listening · note-first verification", color = TextSecondary)
+
+                    Button(
+                        onClick = onStartPractice,
+                        modifier = Modifier.fillMaxWidth().height(52.dp),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Text("START PRACTICE")
+                    }
+                }
+            }
+
+            Text("YOUR FRETBOARD", color = TextMuted, style = MaterialTheme.typography.labelLarge)
+
+            Card(
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = Surface),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(Modifier.padding(vertical = 14.dp)) {
+                    Text(
+                        "Standard tuning · notes 0–12",
+                        color = TextSecondary,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    HomeFretboard()
+                }
+            }
+
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                HomeStat("OPEN", "E A D G B E", Modifier.weight(1f))
+                HomeStat("RANGE", "24 frets", Modifier.weight(1f))
+            }
+
+            Text("CONTINUE", color = TextMuted, style = MaterialTheme.typography.labelLarge)
+
+            OutlinedCard(
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Natural Notes", style = MaterialTheme.typography.titleLarge)
+                    LinearProgressIndicator(
+                        progress = { .5f },
+                        modifier = Modifier.fillMaxWidth(),
+                        color = Lime,
+                        trackColor = Border
+                    )
+                    Text("12 / 24 exercises", color = TextSecondary)
+                }
+            }
+
+            Spacer(Modifier.height(12.dp))
+        }
+
+    }\n}\n\n@Composable\nprivate fun HomeFretboard() {import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import com.whoman.fretbible.core.model.FretboardData
+import com.whoman.fretbible.ui.components.AnimatedBackground
+import com.whoman.fretbible.ui.theme.*
+
+@Composable
+fun HomeScreen(onStartPractice: () -> Unit) {
     Box(Modifier.fillMaxSize()) {
         AnimatedBackground()
 
