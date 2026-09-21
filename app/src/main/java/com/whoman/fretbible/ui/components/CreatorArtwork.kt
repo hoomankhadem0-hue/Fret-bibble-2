@@ -14,7 +14,7 @@ import com.whoman.fretbible.R
 @Composable
 fun CreatorSketchImage(modifier: Modifier = Modifier) {
     Image(
-        painter = painterResource(R.drawable.creator_sketch),
+        painter = painterResource(R.drawable.creator_contact),
         contentDescription = "Creator sketch",
         modifier = modifier,
         contentScale = ContentScale.Fit
