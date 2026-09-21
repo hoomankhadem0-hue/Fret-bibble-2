@@ -87,7 +87,8 @@ object MusicAnalyzer {
         chromaFrames: Array<DoubleArray>,
         sampleRate: Int,
         hopSize: Int,
-        minChangeSeconds: Double = 0.75
+        minChangeSeconds: Double = 0.75,
+        key: String? = null
     ): List<ChordEstimate> {
         if (chromaFrames.isEmpty()) return emptyList()
         val raw = ArrayList<ChordEstimate>()
@@ -97,7 +98,7 @@ object MusicAnalyzer {
 
         for (index in chromaFrames.indices) {
             val frame = chromaFrames[index]
-            val (symbol, confidence) = bestChord(frame)
+            val (symbol, confidence) = bestChord(frame, lastSymbol, key)
             val time = index * hopSize.toDouble() / sampleRate
             if (symbol != lastSymbol && (lastSymbol == null || time - lastStart >= minChangeSeconds)) {
                 if (lastSymbol != null) raw += ChordEstimate(lastSymbol!!, lastStart, lastConfidence)
@@ -112,7 +113,7 @@ object MusicAnalyzer {
         return mergeShortChanges(raw, minChangeSeconds)
     }
 
-    private fun bestChord(chroma: DoubleArray): Pair<String, Double> {
+    private fun bestChord(chroma: DoubleArray, previousSymbol: String? = null, key: String? = null): Pair<String, Double> {
         if (chroma.size != 12) return "—" to 0.0
         val energy = sqrt(chroma.sumOf { it * it })
         if (energy < 1e-6) return "—" to 0.0
@@ -126,6 +127,17 @@ object MusicAnalyzer {
                 score /= intervals.size
                 val penalty = (chroma.sum() - intervals.sumOf { chroma[(root + it) % 12] }) * 0.08
                 score -= penalty
+                if (key != null) {
+                    val roman = ProgressionLibrary.romanFor(noteNames[root] + when (suffix) {\n                        "maj" -> ""\n                        "min" -> "m"\n                        else -> suffix\n                    }, key)
+                    if (roman != null) score += 0.035
+                }
+                if (previousSymbol != null) {
+                    val romanCandidate = ProgressionLibrary.romanFor(noteNames[root] + when (suffix) {\n                        "maj" -> ""\n                        "min" -> "m"\n                        else -> suffix\n                    }, key ?: "")
+                    val romanPrevious = ProgressionLibrary.romanFor(previousSymbol, key ?: "")
+                    if (romanCandidate != null && romanPrevious != null) {
+                        score += ProgressionLibrary.transitionPrior(romanPrevious, romanCandidate) * 0.22
+                    }
+                }
                 if (score > best) {
                     second = best
                     best = score
