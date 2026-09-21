@@ -1,13 +1,18 @@
 package com.whoman.fretbible.ui.screens
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.whoman.fretbible.ui.components.*
 import com.whoman.fretbible.ui.theme.*
 
 @Composable
@@ -22,59 +27,79 @@ fun RoadmapScreen() {
     )
 
     Column(
-        Modifier.fillMaxSize().background(Background).padding(horizontal = 18.dp, vertical = 16.dp)
+        Modifier
+            .fillMaxSize()
+            .background(Background)
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text("ROADMAP", color = TextMuted, style = MaterialTheme.typography.labelLarge)
-        Text("Your path through the neck", color = TextPrimary, style = MaterialTheme.typography.headlineMedium)
-        Text(
-            "Build recognition from open strings to the full fretboard.",
-            color = TextSecondary,
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.padding(top = 6.dp, bottom = 18.dp)
+        ScreenHeader(
+            kicker = "ROADMAP",
+            title = "Learn the neck in layers.",
+            subtitle = "Each stage adds one mental model without losing the previous one."
         )
 
-        Column(
-            Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
+        SurfaceCard(modifier = Modifier.fillMaxWidth(), elevated = true) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Surface(shape = CircleShape, color = LimeSoft) {
+                    Text("1", color = Lime, style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(12.dp))
+                }
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Text("CURRENT TRACK", color = Lime, style = MaterialTheme.typography.labelMedium)
+                    Text("Foundation → Full Fretboard", style = MaterialTheme.typography.titleLarge)
+                    Text("Practice recognition while the map grows.", color = TextSecondary, style = MaterialTheme.typography.bodySmall)
+                }
+            }
+        }
+
+        SectionLabel("THE PATH")
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             nodes.forEachIndexed { index, item ->
-                val unlocked = index < 2
-                Surface(
-                    shape = RoundedCornerShape(18.dp),
-                    color = if (unlocked) ElevatedSurface else Surface,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        Modifier.fillMaxWidth().padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
+                val active = index < 2
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(38.dp)) {
                         Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = if (unlocked) Lime.copy(alpha = .14f) else Background
+                            shape = CircleShape,
+                            color = if (active) Lime else ElevatedSurface,
+                            border = androidx.compose.foundation.BorderStroke(1.dp, if (active) Lime else Border)
                         ) {
                             Text(
-                                item.first,
-                                color = if (unlocked) Lime else TextMuted,
-                                style = MaterialTheme.typography.labelLarge,
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 9.dp)
+                                item.first.takeLast(1),
+                                color = if (active) Background else TextMuted,
+                                style = MaterialTheme.typography.labelMedium,
+                                modifier = Modifier.padding(9.dp)
                             )
                         }
-
-                        Spacer(Modifier.width(14.dp))
-
-                        Column(Modifier.weight(1f)) {
-                            Text(item.second.first, color = TextPrimary, style = MaterialTheme.typography.titleMedium)
-                            Text(item.second.second, color = TextSecondary, style = MaterialTheme.typography.bodySmall)
+                        if (index != nodes.lastIndex) {
+                            Spacer(Modifier.height(4.dp))
+                            Box(Modifier.width(1.dp).height(48.dp).background(Border))
                         }
-
-                        Text(
-                            if (unlocked) "ACTIVE" else "LOCKED",
-                            color = if (unlocked) Lime else TextMuted,
-                            style = MaterialTheme.typography.labelSmall
-                        )
+                    }
+                    Spacer(Modifier.width(10.dp))
+                    Surface(
+                        shape = RoundedCornerShape(17.dp),
+                        color = if (active) ElevatedSurface else Surface,
+                        border = androidx.compose.foundation.BorderStroke(1.dp, if (active) Lime.copy(alpha = .16f) else Border),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Text(item.second.first, color = TextPrimary, style = MaterialTheme.typography.titleMedium)
+                                Text(item.second.second, color = TextSecondary, style = MaterialTheme.typography.bodySmall)
+                            }
+                            Text(
+                                if (active) "ACTIVE" else "LOCKED",
+                                color = if (active) Lime else TextMuted,
+                                style = MaterialTheme.typography.labelSmall
+                            )
+                        }
                     }
                 }
             }
         }
+
+        Spacer(Modifier.height(8.dp))
     }
 }
