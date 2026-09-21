@@ -47,7 +47,7 @@ fun AnalyzerScreen() {
                         if (max > 0) for (pc in 0 until 12) aggregate[pc] /= max
                         val key = MusicAnalyzer.estimateKey(aggregate)
                         val chords = MusicAnalyzer.estimateChords(frames, decoded.sampleRate, 2048, key = key.first)
-                        AnalyzerResult(bpm.first, bpm.second, key.first, key.second, chords)
+                        AnalyzerResult(bpm.first, bpm.second, key.first, key.second, chords, MusicAnalyzer.matchProgressions(chords, key.first))
                     }
                     result = analyzed
                 } catch (t: Throwable) {
@@ -87,6 +87,24 @@ fun AnalyzerScreen() {
                 ResultCard("KEY", analysis.key, "${(analysis.keyConfidence * 100).roundToInt()}%", Modifier.weight(1f))
                 ResultCard("BPM", "%.1f".format(analysis.bpm), "${(analysis.bpmConfidence * 100).roundToInt()}%", Modifier.weight(1f))
             }
+            if (analysis.progressionMatches.isNotEmpty()) {
+                Text("DETECTED PROGRESSIONS", color = TextMuted, style = MaterialTheme.typography.labelLarge)
+                Card(colors = CardDefaults.cardColors(containerColor = Surface), shape = RoundedCornerShape(18.dp), modifier = Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        analysis.progressionMatches.take(5).forEach { match ->
+                            Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                    Text(match.pattern.name, color = TextPrimary, style = MaterialTheme.typography.titleMedium)
+                                    Text("${(match.score * 100).roundToInt()}%", color = Lime, style = MaterialTheme.typography.labelSmall)
+                                }
+                                Text("${match.pattern.genre} · ${match.pattern.numerals.take(match.length).joinToString("  ")}", color = TextSecondary, style = MaterialTheme.typography.bodySmall)
+                                Text("from ${formatTime(analysis.chords.getOrNull(match.startIndex)?.startSeconds ?: 0.0)} · soft harmonic match", color = TextMuted, style = MaterialTheme.typography.bodySmall)
+                            }
+                        }
+                    }
+                }
+            }
+
             Text("CHORD TIMELINE", color = TextMuted, style = MaterialTheme.typography.labelLarge)
             Card(colors = CardDefaults.cardColors(containerColor = Surface), shape = RoundedCornerShape(18.dp), modifier = Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
