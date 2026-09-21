@@ -18,7 +18,7 @@ import androidx.compose.foundation.layout.padding
 import com.whoman.fretbible.ui.screens.*
 import com.whoman.fretbible.ui.theme.*
 
-private enum class Route { Home, Practice, Roadmap, Progress, More, Analyzer }
+private enum class Route { Home, Practice, Roadmap, Progress, Profile, Analyzer, Dictionary }
 
 @Composable
 fun AppNavHost() {
@@ -29,7 +29,7 @@ fun AppNavHost() {
         Route.Practice to Icons.Outlined.PlayArrow,
         Route.Roadmap to Icons.Outlined.Map,
         Route.Progress to Icons.Outlined.BarChart,
-        Route.More to Icons.Outlined.MoreHoriz
+        Route.Profile to Icons.Outlined.MoreHoriz
     )
 
     Scaffold(
@@ -41,12 +41,12 @@ fun AppNavHost() {
                 windowInsets = NavigationBarDefaults.windowInsets
             ) {
                 items.forEach { (item, icon) ->
-                    val selected = route == item || (item == Route.More && route == Route.Analyzer)
+                    val selected = route == item || (item == Route.Profile && route == Route.Analyzer)
                     NavigationBarItem(
                         selected = selected,
                         onClick = { route = item },
                         icon = { Icon(icon, contentDescription = item.name) },
-                        label = { Text(if (item == Route.More) "More" else item.name) },
+                        label = { Text(if (item == Route.Profile) "Profile" else item.name) },
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = Lime,
                             selectedTextColor = Lime,
@@ -66,12 +66,16 @@ fun AppNavHost() {
             label = "screen"
         ) { current ->
             when (current) {
-                Route.Home -> HomeScreen { route = Route.Practice }
+                Route.Home -> HomeScreen(
+                    onStartPractice = { route = Route.Practice },
+                    onOpenDictionary = { route = Route.Dictionary }
+                )
                 Route.Practice -> PracticeScreen()
                 Route.Roadmap -> RoadmapScreen()
                 Route.Progress -> ProgressScreen()
-                Route.More -> ProfileScreen { route = Route.Analyzer }
+                Route.Profile -> ProfileScreen { route = Route.Analyzer }
                 Route.Analyzer -> AnalyzerScreen()
+                Route.Dictionary -> FretboardExplorerScreen { route = Route.Home }
             }
         }
     }
