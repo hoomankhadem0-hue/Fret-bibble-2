@@ -3,20 +3,26 @@ package com.whoman.fretbible.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.whoman.fretbible.audio.AudioSettings
+import com.whoman.fretbible.practice.PracticeStatsStore
 import com.whoman.fretbible.ui.components.*
 import com.whoman.fretbible.ui.theme.*
 
 @Composable
 fun ProfileScreen(onAnalyzer: () -> Unit) {
     val context = LocalContext.current
+    val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
     var threshold by remember { mutableFloatStateOf(0.00035f) }
+    val stats = remember { PracticeStatsStore.load(context) }
 
     LaunchedEffect(Unit) {
         AudioSettings.load(context)
@@ -32,6 +38,13 @@ fun ProfileScreen(onAnalyzer: () -> Unit) {
         else -> "Low"
     }
 
+    val achievements = listOf(
+        Triple("FIRST SESSION", "Complete one practice session.", stats.sessions >= 1),
+        Triple("NOTE HUNTER", "Land 100 correct notes.", stats.correct >= 100),
+        Triple("10 SESSIONS", "Complete ten practice sessions.", stats.sessions >= 10),
+        Triple("SHARP MEMORY", "Reach 80% overall accuracy.", stats.attempts > 0 && stats.accuracy >= 80)
+    )
+
     Column(
         Modifier
             .fillMaxSize()
@@ -41,28 +54,71 @@ fun ProfileScreen(onAnalyzer: () -> Unit) {
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         ScreenHeader(
-            kicker = "MORE",
-            title = "Tools & settings",
-            subtitle = "Keep the learning flow focused. Advanced tools live here."
+            kicker = "PROFILE",
+            title = "Hooman",
+            subtitle = "@Its__whoman · Fret Bible creator"
         )
 
         SurfaceCard(modifier = Modifier.fillMaxWidth(), elevated = true) {
-            Text("SONG ANALYSIS", color = Lime, style = MaterialTheme.typography.labelMedium)
-            Text("Hear a track differently.", style = MaterialTheme.typography.headlineSmall)
-            Text("Explore key, tempo and harmonic structure.", color = TextSecondary, style = MaterialTheme.typography.bodyMedium)
-            PrimaryAction("OPEN ANALYZER", onAnalyzer, Modifier.fillMaxWidth())
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Surface(
+                    modifier = Modifier.size(62.dp),
+                    shape = CircleShape,
+                    color = LimeSoft,
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Lime.copy(alpha = .35f))
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text("H", color = Lime, style = MaterialTheme.typography.headlineSmall)
+                    }
+                }
+                Spacer(Modifier.width(14.dp))
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Text("HOOMAN KHADEM", color = TextPrimary, style = MaterialTheme.typography.titleLarge)
+                    Text("Building Fret Bible", color = TextSecondary, style = MaterialTheme.typography.bodySmall)
+                    Text("hooman.khadem0@gmail.com", color = Lime, style = MaterialTheme.typography.labelSmall)
+                }
+            }
         }
 
-        SectionLabel("AUDIO")
+        SectionLabel("ACHIEVEMENTS")
         SurfaceCard(modifier = Modifier.fillMaxWidth()) {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = androidx.compose.ui.Alignment.Bottom) {
+            achievements.forEachIndexed { index, item ->
+                val unlocked = item.third
+                Row(
+                    Modifier.fillMaxWidth().padding(vertical = if (index == 0) 0.dp else 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = if (unlocked) LimeSoft else Background
+                    ) {
+                        Text(
+                            if (unlocked) "✓" else "·",
+                            color = if (unlocked) Lime else TextMuted,
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp)
+                        )
+                    }
+                    Spacer(Modifier.width(12.dp))
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text(item.first, color = if (unlocked) TextPrimary else TextSecondary, style = MaterialTheme.typography.titleSmall)
+                        Text(item.second, color = TextMuted, style = MaterialTheme.typography.bodySmall)
+                    }
+                    Text(if (unlocked) "UNLOCKED" else "LOCKED", color = if (unlocked) Lime else TextMuted, style = MaterialTheme.typography.labelSmall)
+                }
+            }
+        }
+
+        SectionLabel("SETTINGS")
+        SurfaceCard(modifier = Modifier.fillMaxWidth(), elevated = true) {
+            Text("AUDIO", color = Lime, style = MaterialTheme.typography.labelMedium)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                     Text("Microphone sensitivity", style = MaterialTheme.typography.titleMedium)
                     Text("Raise it for quieter playing; lower it to reject more background noise.", color = TextSecondary, style = MaterialTheme.typography.bodySmall)
                 }
                 Text(sensitivityLabel, color = Lime, style = MaterialTheme.typography.labelMedium)
             }
-
             Slider(
                 value = sliderValue,
                 onValueChange = {
@@ -71,12 +127,10 @@ fun ProfileScreen(onAnalyzer: () -> Unit) {
                     AudioSettings.setSensitivity(context, next)
                 }
             )
-
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text("LESS SENSITIVE", color = TextMuted, style = MaterialTheme.typography.labelSmall)
                 Text("MORE SENSITIVE", color = Lime, style = MaterialTheme.typography.labelSmall)
             }
-
             SecondaryAction(
                 "RESET TO DEFAULT",
                 onClick = {
@@ -87,19 +141,35 @@ fun ProfileScreen(onAnalyzer: () -> Unit) {
             )
         }
 
-        SectionLabel("PRACTICE RULES")
         SurfaceCard(modifier = Modifier.fillMaxWidth()) {
+            Text("PRACTICE", color = Lime, style = MaterialTheme.typography.labelMedium)
             SettingRow("Pitch matching", "Note + octave · fixed for consistent scoring")
             SettingRow("Correctness", "Cents never block a correct note · fixed")
             SettingRow("Tuning", "Standard E · A · D · G · B · E · fixed")
         }
 
         SurfaceCard(modifier = Modifier.fillMaxWidth()) {
-            Text("SESSION CONTROLS", color = TextMuted, style = MaterialTheme.typography.labelMedium)
-            Text("Questions, training mode and fret range are chosen at the beginning of each Practice session.", color = TextSecondary, style = MaterialTheme.typography.bodyMedium)
+            Text("TOOLS", color = Lime, style = MaterialTheme.typography.labelMedium)
+            Text("Song Analyzer", style = MaterialTheme.typography.titleMedium)
+            Text("Explore key, tempo and harmonic structure.", color = TextSecondary, style = MaterialTheme.typography.bodySmall)
+            Spacer(Modifier.height(2.dp))
+            PrimaryAction("OPEN ANALYZER", onAnalyzer, Modifier.fillMaxWidth())
         }
 
-        SectionLabel("ABOUT")
+        SectionLabel("CONTACT THE DESIGNER")
+        SurfaceCard(modifier = Modifier.fillMaxWidth()) {
+            ContactRow(
+                title = "Email",
+                value = "hooman.khadem0@gmail.com",
+                onClick = { uriHandler.openUri("mailto:hooman.khadem0@gmail.com") }
+            )
+            ContactRow(
+                title = "Instagram",
+                value = "@Its__whoman",
+                onClick = { uriHandler.openUri("https://instagram.com/Its__whoman") }
+            )
+        }
+
         SurfaceCard(modifier = Modifier.fillMaxWidth()) {
             Text("FRET BIBLE", color = Lime, style = MaterialTheme.typography.labelMedium)
             Text("made by Hooman", color = TextPrimary, style = MaterialTheme.typography.titleMedium)
@@ -107,5 +177,27 @@ fun ProfileScreen(onAnalyzer: () -> Unit) {
         }
 
         Spacer(Modifier.height(8.dp))
+    }
+}
+
+@Composable
+private fun ContactRow(title: String, value: String, onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(14.dp),
+        color = ElevatedSurface.copy(alpha = .55f),
+        border = androidx.compose.foundation.BorderStroke(1.dp, Border.copy(alpha = .55f)),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+    ) {
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(title, color = TextMuted, style = MaterialTheme.typography.labelSmall)
+                Text(value, color = TextPrimary, style = MaterialTheme.typography.bodyMedium)
+            }
+            Text("OPEN ↗", color = Lime, style = MaterialTheme.typography.labelSmall)
+        }
     }
 }
