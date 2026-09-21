@@ -124,7 +124,25 @@ fun AnalyzerScreen() {
             }
         }
 
-        if (analysis.progressionMatches.isNotEmpty()) {\n            Text("DETECTED PROGRESSIONS", color = TextMuted, style = MaterialTheme.typography.labelLarge)\n            Card(colors = CardDefaults.cardColors(containerColor = Surface), shape = RoundedCornerShape(18.dp), modifier = Modifier.fillMaxWidth()) {\n                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {\n                    analysis.progressionMatches.forEach { match ->\n                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {\n                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {\n                                Text(match.pattern.name, color = TextPrimary, style = MaterialTheme.typography.titleMedium)\n                                Text("${(match.score * 100).roundToInt()}%", color = Lime, style = MaterialTheme.typography.labelMedium)\n                            }\n                            Text("${match.pattern.genre} · ${match.pattern.numerals.take(match.length).joinToString("  →  ")}", color = TextSecondary, style = MaterialTheme.typography.bodySmall)\n                            Text("Starts at ${formatTime(analysis.chords.getOrNull(match.startIndex)?.startSeconds ?: 0.0)} · ${match.length} chords", color = TextMuted, style = MaterialTheme.typography.bodySmall)\n                        }\n                    }\n                    Text("Pattern matching is probabilistic and based on detected chords + key.", color = TextMuted, style = MaterialTheme.typography.bodySmall)\n                }\n            }\n        }\n        Text("ANALYSIS ROADMAP", color = TextMuted, style = MaterialTheme.typography.labelLarge)
+        if (analysis.progressionMatches.isNotEmpty()) {
+            Text("DETECTED PROGRESSIONS", color = TextMuted, style = MaterialTheme.typography.labelLarge)
+            Card(colors = CardDefaults.cardColors(containerColor = Surface), shape = RoundedCornerShape(18.dp), modifier = Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    analysis.progressionMatches.forEach { match ->
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text(match.pattern.name, color = TextPrimary, style = MaterialTheme.typography.titleMedium)
+                                Text("${(match.score * 100).roundToInt()}%", color = Lime, style = MaterialTheme.typography.labelMedium)
+                            }
+                            Text("${match.pattern.genre} · ${match.pattern.numerals.take(match.length).joinToString("  →  ")}", color = TextSecondary, style = MaterialTheme.typography.bodySmall)
+                            Text("Starts at ${formatTime(analysis.chords.getOrNull(match.startIndex)?.startSeconds ?: 0.0)} · ${match.length} chords", color = TextMuted, style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+                    Text("Pattern matching is probabilistic and based on detected chords + key.", color = TextMuted, style = MaterialTheme.typography.bodySmall)
+                }
+            }
+        }
+        Text("ANALYSIS ROADMAP", color = TextMuted, style = MaterialTheme.typography.labelLarge)
         AnalyzerStep("01", "KEY & SCALE", "Detect the tonal center and likely scale.")
         AnalyzerStep("02", "TEMPO", "Estimate BPM and beat grid.")
         AnalyzerStep("03", "CHORDS", "Track chord changes across the song.")
