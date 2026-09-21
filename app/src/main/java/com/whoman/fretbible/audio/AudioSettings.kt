@@ -1,6 +1,3 @@
 package com.whoman.fretbible.audio
-
-object AudioSettings {
-    // RMS gate. Lower values make quiet guitar notes detectable.
-    @Volatile var sensitivity: Float = 0.00035f
-}
+import android.content.Context
+object AudioSettings{private const val PREFS="fret_bible_audio";private const val KEY="sensitivity";@Volatile var sensitivity:Float=0.00035f;private set;fun load(context:Context){sensitivity=context.getSharedPreferences(PREFS,Context.MODE_PRIVATE).getFloat(KEY,0.00035f)};fun setSensitivity(context:Context,value:Float){sensitivity=value;context.getSharedPreferences(PREFS,Context.MODE_PRIVATE).edit().putFloat(KEY,value).apply()}}
