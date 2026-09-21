@@ -1,6 +1,7 @@
 package com.whoman.fretbible.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -17,7 +18,7 @@ import com.whoman.fretbible.ui.components.*
 import com.whoman.fretbible.ui.theme.*
 
 @Composable
-fun HomeScreen(onStartPractice: () -> Unit) {
+fun HomeScreen(onStartPractice: () -> Unit, onOpenDictionary: () -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val stats = remember { PracticeStatsStore.load(context) }
 
@@ -58,13 +59,14 @@ fun HomeScreen(onStartPractice: () -> Unit) {
             }
 
             SectionLabel("THE NECK")
-            SurfaceCard(modifier = Modifier.fillMaxWidth()) {
+            SurfaceCard(modifier = Modifier.fillMaxWidth().clickable(onClick = onOpenDictionary)) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                         Text("Standard tuning", style = MaterialTheme.typography.titleMedium)
-                        Text("Open strings → fret 12 · swipe to explore", color = TextSecondary, style = MaterialTheme.typography.bodySmall)
+                        Text("Open strings → fret 12 · tap to open the full note dictionary", color = TextSecondary, style = MaterialTheme.typography.bodySmall)
                     }
                     Text("E A D G B E", color = Lime, style = MaterialTheme.typography.labelMedium)
+                    Text("OPEN", color = Lime, style = MaterialTheme.typography.labelSmall)
                 }
                 HomeFretboard()
             }
