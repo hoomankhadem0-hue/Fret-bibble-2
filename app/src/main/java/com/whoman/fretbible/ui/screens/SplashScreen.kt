@@ -8,7 +8,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -19,48 +18,87 @@ import kotlinx.coroutines.delay
 
 @Composable
 fun SplashScreen(onFinished: () -> Unit) {
-    var visible by remember { mutableStateOf(false) }
-    val infinite = rememberInfiniteTransition(label = "splash")
-    val pulse by infinite.animateFloat(
-        initialValue = 0.82f, targetValue = 1.08f,
-        animationSpec = infiniteRepeatable(tween(1100, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+    var entered by remember { mutableStateOf(false) }
+    val transition = rememberInfiniteTransition(label = "splash")
+    val pulse by transition.animateFloat(
+        initialValue = 0.88f,
+        targetValue = 1.12f,
+        animationSpec = infiniteRepeatable(tween(1200, easing = FastOutSlowInEasing), RepeatMode.Reverse),
         label = "pulse"
     )
-    val glowAlpha by infinite.animateFloat(
-        initialValue = 0.22f, targetValue = 0.58f,
-        animationSpec = infiniteRepeatable(tween(1100, easing = FastOutSlowInEasing), RepeatMode.Reverse),
-        label = "glow"
+    val scale by animateFloatAsState(
+        targetValue = if (entered) 1f else .78f,
+        animationSpec = spring(dampingRatio = .72f, stiffness = 220f),
+        label = "scale"
     )
-    val alpha by animateFloatAsState(if (visible) 1f else 0f, tween(500), label = "alpha")
-    val scale by animateFloatAsState(if (visible) 1f else .88f, spring(stiffness = Spring.StiffnessMediumLow), label = "scale")
+    val alpha by animateFloatAsState(
+        targetValue = if (entered) 1f else 0f,
+        animationSpec = tween(600, easing = FastOutSlowInEasing),
+        label = "alpha"
+    )
 
     LaunchedEffect(Unit) {
-        visible = true
-        delay(1850)
+        delay(120)
+        entered = true
+        delay(1550)
         onFinished()
     }
 
-    Box(Modifier.fillMaxSize().background(Background)) {
+    Box(Modifier.fillMaxSize()) {
         AnimatedBackground()
-        Column(
-            Modifier.fillMaxSize().graphicsLayer { this.alpha = alpha; scaleX = scale; scaleY = scale },
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+
+        Box(
+            Modifier.align(Alignment.Center).size(210.dp),
+            contentAlignment = Alignment.Center
         ) {
-            Box(Modifier.size(86.dp), contentAlignment = Alignment.Center) {
-                Box(
-                    Modifier.size(62.dp).scale(pulse).background(Lime.copy(alpha = glowAlpha * .20f), CircleShape)
+            Box(
+                Modifier.size((150 * pulse).dp)
+                    .graphicsLayer { alpha = .10f }
+                    .background(Lime, CircleShape)
+            )
+            Box(
+                Modifier.size(105.dp)
+                    .graphicsLayer { alpha = .08f; scaleX = pulse; scaleY = pulse }
+                    .background(Lime, CircleShape)
+            )
+
+            Column(
+                Modifier.graphicsLayer {
+                    this.alpha = alpha
+                    scaleX = scale
+                    scaleY = scale
+                },
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    "FRET BIBLE",
+                    color = TextPrimary,
+                    fontSize = 40.sp,
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = 2.5.sp
                 )
-                Box(
-                    Modifier.size(12.dp).background(Lime, CircleShape)
-                )
+                Spacer(Modifier.height(8.dp))
+                Text("made by Hooman", color = TextMuted, fontSize = 13.sp)
+                Spacer(Modifier.height(18.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                    repeat(3) { i ->
+                        val dot by transition.animateFloat(
+                            initialValue = .35f,
+                            targetValue = 1f,
+                            animationSpec = infiniteRepeatable(
+                                tween(700, delayMillis = i * 160),
+                                RepeatMode.Reverse
+                            ),
+                            label = "dot$i"
+                        )
+                        Box(
+                            Modifier.size(5.dp)
+                                .graphicsLayer { alpha = dot }
+                                .background(Lime, CircleShape)
+                        )
+                    }
+                }
             }
-            Spacer(Modifier.height(18.dp))
-            Text("FRET BIBLE", color = TextPrimary, fontSize = 40.sp, fontWeight = FontWeight.Black, letterSpacing = 3.sp)
-            Spacer(Modifier.height(7.dp))
-            Text("PLAY IT. KNOW IT.", color = Lime, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
-            Spacer(Modifier.height(10.dp))
-            Text("made by Who?man", color = TextMuted, fontSize = 13.sp)
         }
     }
 }
