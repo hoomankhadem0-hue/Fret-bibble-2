@@ -8,7 +8,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Map
-import androidx.compose.material.icons.outlined.MoreHoriz
+import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -29,7 +29,7 @@ fun AppNavHost() {
         Route.Practice to Icons.Outlined.PlayArrow,
         Route.Roadmap to Icons.Outlined.Map,
         Route.Progress to Icons.Outlined.BarChart,
-        Route.Profile to Icons.Outlined.MoreHoriz
+        Route.Profile to Icons.Outlined.Person
     )
 
     Scaffold(
@@ -41,7 +41,7 @@ fun AppNavHost() {
                 windowInsets = NavigationBarDefaults.windowInsets
             ) {
                 items.forEach { (item, icon) ->
-                    val selected = route == item || (item == Route.Profile)
+                    val selected = route == item || (item == Route.Home && (route == Route.Analyzer || route == Route.Dictionary))
                     NavigationBarItem(
                         selected = selected,
                         onClick = { route = item },
