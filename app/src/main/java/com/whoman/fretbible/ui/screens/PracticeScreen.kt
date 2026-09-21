@@ -547,6 +547,7 @@ fun PracticeScreen(userName: String) {
                 }
             }
         }
+        }
 
         overview?.let { result ->
             Surface(
