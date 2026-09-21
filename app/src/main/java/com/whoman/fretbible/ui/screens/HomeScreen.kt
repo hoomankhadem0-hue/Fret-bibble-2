@@ -1,7 +1,6 @@
 package com.whoman.fretbible.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -18,6 +17,7 @@ import com.whoman.fretbible.ui.theme.*
 
 @Composable
 fun HomeScreen(
+    userName: String,
     onStartPractice: () -> Unit,
     onOpenDictionary: () -> Unit,
     onOpenAnalyzer: () -> Unit
@@ -36,25 +36,14 @@ fun HomeScreen(
         ) {
             ScreenHeader(
                 kicker = "FRET BIBLE",
-                title = "Know the neck.",
-                subtitle = "Learn every note by hearing it, finding it, and playing it."
+                title = "Ready, ${userName.trim()}?",
+                subtitle = "Play. Find. Remember."
             )
 
             SurfaceCard(modifier = Modifier.fillMaxWidth(), elevated = true) {
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                        Text("NEXT SESSION", color = Lime, style = MaterialTheme.typography.labelMedium)
-                        Text("Find the Note", style = MaterialTheme.typography.headlineSmall)
-                        Text("Random targets, up to 21 frets.", color = TextSecondary, style = MaterialTheme.typography.bodyMedium)
-                    }
-                    Surface(shape = RoundedCornerShape(14.dp), color = LimeSoft) {
-                        Text("●", color = Lime, style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(10.dp))
-                    }
-                }
+                Text("NEXT SESSION", color = Lime, style = MaterialTheme.typography.labelMedium)
+                Text("Find the Note", style = MaterialTheme.typography.headlineSmall)
+                Text("Random targets · up to 21 frets", color = TextSecondary, style = MaterialTheme.typography.bodyMedium)
                 Spacer(Modifier.height(2.dp))
                 PrimaryAction("START PRACTICE", onStartPractice, Modifier.fillMaxWidth())
             }
@@ -65,25 +54,15 @@ fun HomeScreen(
                 MiniStat("POINTS", stats.points.toString(), Modifier.weight(1f))
             }
 
-            SectionLabel("LEARN")
-            ToolCard(
-                title = "Fretboard Dictionary",
-                description = "Browse every note, string and fret in standard tuning.",
-                meta = "OPEN → FRET 21",
-                onClick = onOpenDictionary
-            )
-            ToolCard(
-                title = "Song Analyzer",
-                description = "Turn a track into key, tempo and harmonic landmarks.",
-                meta = "AUDIO → ANALYSIS",
-                onClick = onOpenAnalyzer
-            )
+            SectionLabel("TOOLS")
+            ToolCard("Fretboard Dictionary", "Every note, string and fret.", "OPEN →", onOpenDictionary)
+            ToolCard("Song Analyzer", "Key, tempo and harmony.", "OPEN →", onOpenAnalyzer)
 
-            SectionLabel("THE LOOP")
+            SectionLabel("HOW IT WORKS")
             SurfaceCard(modifier = Modifier.fillMaxWidth()) {
-                LoopStep("01", "See", "A note target appears.")
-                LoopStep("02", "Play", "Play one clean note.")
-                LoopStep("03", "Learn", "Get feedback and build recall.")
+                LoopStep("01", "See", "Get a note.")
+                LoopStep("02", "Play", "Play it clean.")
+                LoopStep("03", "Learn", "Get feedback.")
             }
 
             Spacer(Modifier.height(8.dp))
@@ -92,12 +71,7 @@ fun HomeScreen(
 }
 
 @Composable
-private fun ToolCard(
-    title: String,
-    description: String,
-    meta: String,
-    onClick: () -> Unit
-) {
+private fun ToolCard(title: String, description: String, meta: String, onClick: () -> Unit) {
     Surface(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
