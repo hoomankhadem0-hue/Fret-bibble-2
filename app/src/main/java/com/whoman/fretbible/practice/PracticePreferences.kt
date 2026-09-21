@@ -27,7 +27,7 @@ object PracticePreferences {
         }.getOrDefault(PracticeMode.ADAPTIVE)
 
         val storedTimer = p.getInt("timerSeconds", 10)
-        val timer = if (storedTimer <= 0) null else storedTimer.coerceIn(1, 120)
+        val timer = if (storedTimer <= 0) null else storedTimer.coerceIn(1, 600)
 
         return PracticeConfig(
             count = p.getInt("count", 24).coerceIn(5, 100),
@@ -42,7 +42,7 @@ object PracticePreferences {
             .putInt("count", c.count.coerceIn(5, 100))
             .putInt("maxFret", c.maxFret.coerceIn(1, 21))
             .putString("mode", c.mode.name)
-            .putInt("timerSeconds", c.timerSeconds?.coerceIn(1, 120) ?: 0)
+            .putInt("timerSeconds", c.timerSeconds?.coerceIn(1, 600) ?: 0)
             .apply()
     }
 }
