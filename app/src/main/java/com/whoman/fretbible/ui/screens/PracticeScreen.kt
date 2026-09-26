@@ -83,6 +83,10 @@ fun PracticeScreen(userName: String) {
 
     val current = targets.getOrNull(index)
     val accuracy = if (correct + misses == 0) 0 else correct * 100 / (correct + misses)
+    val targetDeviationCents = if (current != null && detected != null) {
+        (detected!!.midi - current.midi) * 100.0 + detected!!.cents
+    } else null
+    val targetInTune = targetDeviationCents != null && kotlin.math.abs(targetDeviationCents) <= 5.0
 
     fun resetStability() { stableFrames = 0; lastMidi = -999 }
 
@@ -264,8 +268,8 @@ fun PracticeScreen(userName: String) {
 
     val status = when (feedback) {
         AttemptState.CORRECT -> "CORRECT"
-        AttemptState.TOO_HIGH -> "TOO HIGH"
-        AttemptState.TOO_LOW -> "TOO LOW"
+        AttemptState.TOO_HIGH -> "TUNE DOWN"
+        AttemptState.TOO_LOW -> "TUNE UP"
         AttemptState.WRONG_NOTE -> if (config.timerSeconds != null && secondsLeft == 0) "TIME'S UP" else "TRY AGAIN"
         AttemptState.LISTENING -> if (running) "LISTENING" else "READY"
     }
@@ -396,7 +400,25 @@ fun PracticeScreen(userName: String) {
                             }
                             Column(horizontalAlignment = Alignment.End) {
                                 Text("STRING", color = TextMuted, style = MaterialTheme.typography.labelSmall)
-                                Text("${current.stringNumber}", color = TextPrimary, style = MaterialTheme.typography.titleLarge)
+                                Surface(
+                                    shape = RoundedCornerShape(10.dp),
+                                    color = (if (running && detected != null) {
+                                        if (targetInTune) Lime else Error
+                                    } else ElevatedSurface).copy(alpha = if (running && detected != null) .16f else 1f),
+                                    border = androidx.compose.foundation.BorderStroke(
+                                        1.dp,
+                                        if (running && detected != null) (if (targetInTune) Lime else Error).copy(alpha = .65f) else Border
+                                    )
+                                ) {
+                                    Text(
+                                        current.stringNumber.toString(),
+                                        color = if (running && detected != null) {
+                                            if (targetInTune) Lime else Error
+                                        } else TextPrimary,
+                                        style = MaterialTheme.typography.titleLarge,
+                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp)
+                                    )
+                                }
                             }
                         }
                         Text(
@@ -459,7 +481,19 @@ fun PracticeScreen(userName: String) {
                         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                                 Text(if (running) "MIC ACTIVE" else "READY", color = if (running) Lime else TextMuted, style = MaterialTheme.typography.labelSmall)
-                                Text(status, color = statusColor, style = MaterialTheme.typography.titleLarge)
+                                Text(
+                                    if (running && targetDeviationCents != null) {
+                                        when {
+                                            targetInTune -> "IN TUNE"
+                                            targetDeviationCents < 0 -> "TUNE UP"
+                                            else -> "TUNE DOWN"
+                                        }
+                                    } else status,
+                                    color = if (running && targetDeviationCents != null) {
+                                        if (targetInTune) Lime else Error
+                                    } else statusColor,
+                                    style = MaterialTheme.typography.titleLarge
+                                )
                             }
                             Surface(shape = RoundedCornerShape(12.dp), color = LimeSoft) {
                                 Text(
@@ -470,7 +504,7 @@ fun PracticeScreen(userName: String) {
                                 )
                             }
                         }
-                        PitchMeter(detected)
+                        PitchMeter(detected, targetMidi = current.midi)
                         Text(
                             detected?.let {
                                 "${it.frequencyHz.toInt()} Hz · ${if (it.cents >= 0) "+" else ""}${it.cents.toInt()}¢"
