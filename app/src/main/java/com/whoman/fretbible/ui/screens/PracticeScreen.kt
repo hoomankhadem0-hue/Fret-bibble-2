@@ -171,21 +171,19 @@ fun PracticeScreen(userName: String) {
         var value = 3
         while (value > 0 && countdownActive) {
             countdown = value
-            runCatching {
-                val tone = ToneGenerator(AudioManager.STREAM_MUSIC, 72)
-                try {
-                    tone.startTone(
-                        if (value == 1) ToneGenerator.TONE_PROP_ACK else ToneGenerator.TONE_PROP_BEEP,
-                        if (value == 1) 140 else 90
-                    )
-                    delay(1000)
-                } finally {
-                    tone.release()
-                }
-            }.getOrElse {
-                // A device may reject ToneGenerator; the visual countdown still continues.
-                delay(1000)
+            // Sound is best-effort; the one-second visual beat must remain reliable.
+            val tone = runCatching { ToneGenerator(AudioManager.STREAM_MUSIC, 72) }.getOrNull()
+            try {
+                tone?.startTone(
+                    if (value == 1) ToneGenerator.TONE_PROP_ACK else ToneGenerator.TONE_PROP_BEEP,
+                    if (value == 1) 140 else 90
+                )
+            } catch (_: RuntimeException) {
+                // Some devices do not provide a usable tone generator.
+            } finally {
+                tone?.release()
             }
+            delay(1000)
             value--
         }
 
@@ -339,7 +337,7 @@ fun PracticeScreen(userName: String) {
                     }
                 }
 
-                if (!running) {
+                if (phase == PracticePhase.READY || phase == PracticePhase.COMPLETE) {
                     SurfaceCard(modifier = Modifier.fillMaxWidth(), elevated = true) {
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
@@ -602,7 +600,7 @@ fun PracticeScreen(userName: String) {
                     Spacer(Modifier.height(10.dp))
                     Text(value.toString(), color = TextPrimary, style = MaterialTheme.typography.displayLarge)
                     Spacer(Modifier.height(8.dp))
-                    Text("Your session starts now", color = TextSecondary, style = MaterialTheme.typography.bodyMedium)
+                    Text("Get your guitar ready", color = TextSecondary, style = MaterialTheme.typography.bodyMedium)
                 }
             }
         }
