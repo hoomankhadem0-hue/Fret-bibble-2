@@ -207,14 +207,24 @@ fun PracticeScreen(userName: String) {
         val targetIndex = index
         secondsLeft = limit
 
-        while (phase == PracticePhase.ACTIVE && index == targetIndex && secondsLeft > 0) {
+        while (
+            phase == PracticePhase.ACTIVE &&
+            index == targetIndex &&
+            secondsLeft > 0 &&
+            feedback != AttemptState.CORRECT
+        ) {
             delay(1000)
             if (phase == PracticePhase.ACTIVE && index == targetIndex) {
                 secondsLeft = (secondsLeft - 1).coerceAtLeast(0)
             }
         }
 
-        if (phase == PracticePhase.ACTIVE && index == targetIndex && secondsLeft == 0) {
+        if (
+            phase == PracticePhase.ACTIVE &&
+            index == targetIndex &&
+            secondsLeft == 0 &&
+            feedback != AttemptState.CORRECT
+        ) {
             feedback = AttemptState.WRONG_NOTE
             misses++
             streak = 0
